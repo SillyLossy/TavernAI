@@ -891,7 +891,7 @@ router.post('/generate', jsonParser, function (request, response) {
         }
 
         let cachingAtDepth = getConfigValue('claude.cachingAtDepth', -1);
-        if (Number.isInteger(cachingAtDepth) && cachingAtDepth >= 0 && request.body.model.startsWith('anthropic/claude-3')) {
+        if (Number.isInteger(cachingAtDepth) && cachingAtDepth >= 0 && request.body.model?.startsWith('anthropic/claude-3')) {
             cachingAtDepthForOpenRouterClaude(request.body.messages, cachingAtDepth);
         }
     } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.CUSTOM) {
