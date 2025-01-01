@@ -1916,7 +1916,7 @@
     "{{name}}": "{{name}}",
     "If necessary, you can later restore this chat file from the /backups folder": "若需要，您可稍后在 /backups 文件夹中恢复此聊天文件。",
     "Also delete the current chat file": "同时删除当前聊天文件",
-    "PErsona Lorebook for": "Persona Lorebook for",
+    "Persona Lorebook for": "Persona Lorebook for",
     "persona_world_template_txt": "A selected World Info will be bound to this persona. When generating an AI reply,\n            it will be combined with the entries from global, character and chat lorebooks.",
     "Export for character": "导出角色",
     "Export prompts for this character, including their order.": "导出此角色的提示词，包括其顺序。",

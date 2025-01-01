@@ -37,6 +37,9 @@ RUN \
   echo "*** Convert line endings to Unix format ***" && \
   dos2unix "./docker-entrypoint.sh"
 
+# Fix extension repos permissions
+RUN git config --global --add safe.directory "*"
+
 EXPOSE 8000
 
 # Ensure proper handling of kernel signals
