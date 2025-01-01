@@ -14,7 +14,7 @@ import jimp from 'jimp';
 
 import { AVATAR_WIDTH, AVATAR_HEIGHT } from '../constants.js';
 import { jsonParser, urlencodedParser } from '../express-common.js';
-import validateAvatarUrlMiddleware from '../middleware/validateAvatarUrl.js';
+import { default as validateAvatarUrlMiddleware, getFileNameValidationFunction } from '../middleware/validateAvatarUrl.js';
 import { deepMerge, humanizedISO8601DateTime, tryParse, extractFileFromZipBuffer, MemoryLimitedMap, getConfigValue } from '../util.js';
 import { TavernCardValidator } from '../validator/TavernCardValidator.js';
 import { parse, write } from '../character-card-parser.js';
@@ -551,7 +551,7 @@ async function importFromYaml(uploadPath, context, preservedFileName) {
  * @returns {Promise<string>} Internal name of the character
  */
 async function importFromCharX(uploadPath, { request }, preservedFileName) {
-    const data = fs.readFileSync(uploadPath);
+    const data = fs.readFileSync(uploadPath).buffer;
     fs.rmSync(uploadPath);
     console.log('Importing from CharX');
     const cardBuffer = await extractFileFromZipBuffer(data, 'card.json');
@@ -899,7 +899,7 @@ router.post('/edit-attribute', jsonParser, validateAvatarUrlMiddleware, async fu
  *
  * @returns {void}
  * */
-router.post('/merge-attributes', jsonParser, async function (request, response) {
+router.post('/merge-attributes', jsonParser, getFileNameValidationFunction('avatar'), async function (request, response) {
     try {
         const update = request.body;
         const avatarPath = path.join(request.user.directories.characters, update.avatar);

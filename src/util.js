@@ -157,7 +157,7 @@ export function formatBytes(bytes) {
 
 /**
  * Extracts a file with given extension from an ArrayBuffer containing a ZIP archive.
- * @param {ArrayBuffer} archiveBuffer Buffer containing a ZIP archive
+ * @param {ArrayBufferLike} archiveBuffer Buffer containing a ZIP archive
  * @param {string} fileExtension File extension to look for
  * @returns {Promise<Buffer|null>} Buffer containing the extracted file. Null if the file was not found.
  */
