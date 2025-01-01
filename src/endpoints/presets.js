@@ -119,8 +119,9 @@ router.post('/delete-openai', jsonParser, function (request, response) {
         return response.sendStatus(400);
     }
 
-    const name = request.body.name;
-    const pathToFile = path.join(request.user.directories.openAI_Settings, `${name}.json`);
+    const name = sanitize(request.body.name);
+    const filename = `${name}.json`;
+    const pathToFile = path.join(request.user.directories.openAI_Settings, filename);
 
     if (fs.existsSync(pathToFile)) {
         fs.rmSync(pathToFile);

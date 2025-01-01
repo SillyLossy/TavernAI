@@ -28,4 +28,5 @@ export function getFileNameValidationFunction(fieldName) {
     };
 }
 
-export default getFileNameValidationFunction('avatar_url');
+const avatarUrlValidationFunction = getFileNameValidationFunction('avatar_url');
+export default avatarUrlValidationFunction;

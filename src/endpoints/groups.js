@@ -92,7 +92,7 @@ router.post('/edit', jsonParser, (request, response) => {
     if (!request.body || !request.body.id) {
         return response.sendStatus(400);
     }
-    const id = request.body.id;
+    const id = sanitize(String(request.body.id));
     const pathToFile = path.join(request.user.directories.groups, `${id}.json`);
     const fileData = JSON.stringify(request.body, null, 4);
 
@@ -105,7 +105,7 @@ router.post('/delete', jsonParser, async (request, response) => {
         return response.sendStatus(400);
     }
 
-    const id = request.body.id;
+    const id = sanitize(String(request.body.id));
     const pathToGroup = path.join(request.user.directories.groups, sanitize(`${id}.json`));
 
     try {
