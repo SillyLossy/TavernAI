@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 /**
  * Gets a middleware function that validates the field in the request body.
  * @param {string} fieldName Field name
@@ -12,7 +14,7 @@ export function getFileNameValidationFunction(fieldName) {
     */
     return function validateAvatarUrlMiddleware(req, res, next) {
         if (req.body && fieldName in req.body && typeof req.body[fieldName] === 'string') {
-            const forbiddenRegExp = /[\x00/\\]/;
+            const forbiddenRegExp = path.sep === '/' ? /[/\x00]/ : /[/\x00\\]/;
             if (forbiddenRegExp.test(req.body[fieldName])) {
                 console.error('An error occurred while validating the request body', {
                     handle: req.user.profile.handle,
