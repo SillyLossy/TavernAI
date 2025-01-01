@@ -129,7 +129,7 @@ router.post('/update', jsonParser, async (request, response) => {
         }
 
         const basePath = global ? PUBLIC_DIRECTORIES.globalExtensions : request.user.directories.extensions;
-        const extensionPath = path.join(basePath, extensionName);
+        const extensionPath = path.join(basePath, sanitize(extensionName));
 
         if (!fs.existsSync(extensionPath)) {
             return response.status(404).send(`Directory does not exist at ${extensionPath}`);
