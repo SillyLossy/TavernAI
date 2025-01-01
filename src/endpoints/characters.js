@@ -935,11 +935,6 @@ router.post('/delete', jsonParser, validateAvatarUrlMiddleware, async function (
         return response.sendStatus(400);
     }
 
-    if (request.body.avatar_url !== sanitize(request.body.avatar_url)) {
-        console.error('Malicious filename prevented');
-        return response.sendStatus(403);
-    }
-
     const avatarPath = path.join(request.user.directories.characters, request.body.avatar_url);
     if (!fs.existsSync(avatarPath)) {
         return response.sendStatus(400);
@@ -947,16 +942,17 @@ router.post('/delete', jsonParser, validateAvatarUrlMiddleware, async function (
 
     fs.rmSync(avatarPath);
     invalidateThumbnail(request.user.directories, 'avatar', request.body.avatar_url);
-    let dir_name = (request.body.avatar_url.replace('.png', ''));
-
-    if (!dir_name.length) {
-        console.error('Malicious dirname prevented');
-        return response.sendStatus(403);
-    }
 
     if (request.body.delete_chats == true) {
         try {
-            await fs.promises.rm(path.join(request.user.directories.chats, sanitize(dir_name)), { recursive: true, force: true });
+            const chatsDirectory = sanitize(request.body.avatar_url.replace('.png', ''));
+
+            if (!chatsDirectory.length) {
+                console.error('Malicious dirname prevented');
+                return response.sendStatus(403);
+            }
+
+            await fs.promises.rm(path.join(request.user.directories.chats, chatsDirectory), { recursive: true, force: true });
         } catch (err) {
             console.error(err);
             return response.sendStatus(500);

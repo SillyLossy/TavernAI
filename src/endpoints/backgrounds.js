@@ -7,6 +7,7 @@ import sanitize from 'sanitize-filename';
 import { jsonParser, urlencodedParser } from '../express-common.js';
 import { invalidateThumbnail } from './thumbnails.js';
 import { getImages } from '../util.js';
+import { getFileNameValidationFunction } from '../middleware/validateAvatarUrl.js';
 
 export const router = express.Router();
 
@@ -15,13 +16,8 @@ router.post('/all', jsonParser, function (request, response) {
     response.send(JSON.stringify(images));
 });
 
-router.post('/delete', jsonParser, function (request, response) {
+router.post('/delete', jsonParser, getFileNameValidationFunction('bg'), function (request, response) {
     if (!request.body) return response.sendStatus(400);
-
-    if (request.body.bg !== sanitize(request.body.bg)) {
-        console.error('Malicious bg name prevented');
-        return response.sendStatus(403);
-    }
 
     const fileName = path.join(request.user.directories.backgrounds, sanitize(request.body.bg));
 

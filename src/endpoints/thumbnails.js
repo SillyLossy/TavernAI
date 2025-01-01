@@ -188,11 +188,6 @@ router.get('/', jsonParser, async function (request, response) {
             return response.sendStatus(400);
         }
 
-        if (sanitize(file) !== file) {
-            console.error('Malicious filename prevented');
-            return response.sendStatus(403);
-        }
-
         if (thumbnailsDisabled) {
             const folder = getOriginalFolder(request.user.directories, type);
 
