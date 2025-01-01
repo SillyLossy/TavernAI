@@ -68,7 +68,7 @@ export function invalidateThumbnail(directories, type, file) {
     const folder = getThumbnailFolder(directories, type);
     if (folder === undefined) throw new Error('Invalid thumbnail type');
 
-    const pathToThumbnail = path.join(folder, file);
+    const pathToThumbnail = path.join(folder, sanitize(file));
 
     if (fs.existsSync(pathToThumbnail)) {
         fs.rmSync(pathToThumbnail);
@@ -172,7 +172,7 @@ export const router = express.Router();
 
 // Important: This route must be mounted as '/thumbnail'. It is used in the client code and saved to chat files.
 router.get('/', jsonParser, async function (request, response) {
-    try{
+    try {
         if (typeof request.query.file !== 'string' || typeof request.query.type !== 'string') {
             return response.sendStatus(400);
         }
