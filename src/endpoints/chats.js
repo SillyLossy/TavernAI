@@ -9,6 +9,7 @@ import { sync as writeFileAtomicSync } from 'write-file-atomic';
 import _ from 'lodash';
 
 import { jsonParser, urlencodedParser } from '../express-common.js';
+import validateAvatarUrlMiddleware from '../middleware/validateAvatarUrl.js';
 import {
     getConfigValue,
     humanizedISO8601DateTime,
@@ -266,7 +267,7 @@ function flattenChubChat(userName, characterName, lines) {
 
 export const router = express.Router();
 
-router.post('/save', jsonParser, function (request, response) {
+router.post('/save', jsonParser, validateAvatarUrlMiddleware, function (request, response) {
     try {
         const directoryName = String(request.body.avatar_url).replace('.png', '');
         const chatData = request.body.chat;
@@ -282,7 +283,7 @@ router.post('/save', jsonParser, function (request, response) {
     }
 });
 
-router.post('/get', jsonParser, function (request, response) {
+router.post('/get', jsonParser, validateAvatarUrlMiddleware, function (request, response) {
     try {
         const dirName = String(request.body.avatar_url).replace('.png', '');
         const directoryPath = path.join(request.user.directories.chats, dirName);
@@ -319,7 +320,7 @@ router.post('/get', jsonParser, function (request, response) {
 });
 
 
-router.post('/rename', jsonParser, async function (request, response) {
+router.post('/rename', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     if (!request.body || !request.body.original_file || !request.body.renamed_file) {
         return response.sendStatus(400);
     }
@@ -344,7 +345,7 @@ router.post('/rename', jsonParser, async function (request, response) {
     return response.send({ ok: true, sanitizedFileName });
 });
 
-router.post('/delete', jsonParser, function (request, response) {
+router.post('/delete', jsonParser, validateAvatarUrlMiddleware, function (request, response) {
     const dirName = String(request.body.avatar_url).replace('.png', '');
     const fileName = String(request.body.chatfile);
     const filePath = path.join(request.user.directories.chats, dirName, sanitize(fileName));
@@ -360,7 +361,7 @@ router.post('/delete', jsonParser, function (request, response) {
     return response.send('ok');
 });
 
-router.post('/export', jsonParser, async function (request, response) {
+router.post('/export', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     if (!request.body.file || (!request.body.avatar_url && request.body.is_group === false)) {
         return response.sendStatus(400);
     }
@@ -450,7 +451,7 @@ router.post('/group/import', urlencodedParser, function (request, response) {
     }
 });
 
-router.post('/import', urlencodedParser, function (request, response) {
+router.post('/import', urlencodedParser, validateAvatarUrlMiddleware, function (request, response) {
     if (!request.body) return response.sendStatus(400);
 
     const format = request.body.file_type;
@@ -596,7 +597,7 @@ router.post('/group/save', jsonParser, (request, response) => {
     return response.send({ ok: true });
 });
 
-router.post('/search', jsonParser, function (request, response) {
+router.post('/search', jsonParser, validateAvatarUrlMiddleware, function (request, response) {
     try {
         const { query, avatar_url, group_id } = request.body;
         let chatFiles = [];

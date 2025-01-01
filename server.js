@@ -58,7 +58,6 @@ import {
 import getWebpackServeMiddleware from './src/middleware/webpack-serve.js';
 import basicAuthMiddleware from './src/middleware/basicAuth.js';
 import whitelistMiddleware from './src/middleware/whitelist.js';
-import validateAvatarUrlMiddleware from './src/middleware/validateAvatarUrl.js';
 import multerMonkeyPatch from './src/middleware/multerMonkeyPatch.js';
 import initRequestProxy from './src/request-proxy.js';
 import {
@@ -575,8 +574,6 @@ redirect('/savemovingui', '/api/moving-ui/save');
 redirect('/api/serpapi/search', '/api/search/serpapi');
 redirect('/api/serpapi/visit', '/api/search/visit');
 redirect('/api/serpapi/transcript', '/api/search/transcript');
-
-app.use(validateAvatarUrlMiddleware);
 
 app.use('/api/moving-ui', movingUIRouter);
 app.use('/api/images', imagesRouter);
