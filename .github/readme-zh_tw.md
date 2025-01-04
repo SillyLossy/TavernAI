@@ -18,7 +18,7 @@
 
 ---
 
-SillyTavern 提供一個統一的前端介面，整合多種大型語言模型的 API（包括：KoboldAI/CPP、Horde、NovelAI、Ooba、Tabby、OpenAI、OpenRouter、Claude、Mistral 等）。同時具備行動裝置友善的佈局、視覺小說模式（Visual Novel Mode）、Automatic1111 與 ComfyUI 的影像生成 API 整合、TTS（語音合成）、世界資訊（Lorebook）、可自訂 UI、自動翻譯功能，以及強大的提示詞（prompt）設定選項和無限的第三方擴充潛力。
+SillyTavern 提供一個統一的前端介面，整合多種大型語言模型的 API（包括：KoboldAI/CPP、Horde、NovelAI、Ooba、Tabby、OpenAI、OpenRouter、Claude、Mistral 等）。同時具備對行動裝置友善的佈局、視覺小說模式（Visual Novel Mode）、Automatic1111 與 ComfyUI 的影像生成 API 整合、TTS（語音合成）、世界資訊（Lorebook）、可自訂 UI、自動翻譯功能，以及強大的提示詞（prompt）設定選項和無限的第三方擴充潛力。
 
 我們擁有一個 [官方文件網站](https://docs.sillytavern.app/) 可以幫助解答絕大多數的使用問題，並幫助您順利入門。
 
@@ -30,18 +30,18 @@ SillyTavern 起源於 2023 年 2 月，作為 TavernAI 1.2.8 的分支版本發�
 
 ## 我們的願景
 
-1. 我們致力於賦予使用者對 LLM 提示詞的最大控制權與實用性，並認為學習過程中的挑戰是樂趣的一部分
+1. 我們致力於賦予使用者對 LLM 提示詞的最大控制權與實用性，並認為學習過程中的挑戰是樂趣的一部分。
 2. 我們不提供任何線上或託管服務，也不會程式化追蹤任何使用者數據。
 3. SillyTavern 是由一群熱衷於 LLM 的開發者社群所打造的熱情專案，並將永遠保持免費與開源。
 
 ## 分支介紹
 
-SillyTavern 採用雙分支開發模式，確保為所有使用者提供流暢的使用體驗。
+SillyTavern 採用雙分支開發模式，確保為所有使用者提供流暢的體驗。
 
 * `release`（穩定版）：🌟 **推薦給大部分的使用者使用。** 此分支最為穩定，僅在主要版本發布時更新。適合大多數人，通常每月更新一次。
 * `staging`（開發版）：⚠️ **不建議普通使用者使用。** 此分支包含最新功能，但可能隨時出現問題。適合進階使用者與愛好者，每日多次更新。
 
-如果您不熟悉 git CLI 或對分支概念不清楚，請放心對您來說，`release`（穩定版）分支永遠是首選。
+如果您不熟悉 git CLI 或對分支概念不清楚，請放心，對您來說，`release`（穩定版）分支永遠是首選。
 
 ## 使用 SillyTavern 需要什麼？
 
@@ -84,11 +84,11 @@ SillyTavern 的硬體需求相當低。任何能夠運行 NodeJS 18 或更高版
 
 ## 角色卡
 
-SillyTavern 的核心概念是「角色卡」（Character Cards）。角色卡是一組設定 LLM 行為的提示詞，用於 SillyTavern 中進行持續性對話。其功能類似於 ChatGPT 的 GPT 或 Poe 的聊天機器人。角色卡的內容可以是任何形式：抽象場景、針對特定任務設計的助手、知名人物，或者虛構角色。
+SillyTavern 的核心概念是「角色卡」（Character Cards）。角色卡是一組設定 LLM 行為的提示詞，用於 SillyTavern 中進行持續性對話。功能類似於 ChatGPT 的 GPT 或 Poe 的聊天機器人。角色卡的內容可以是任何形式：抽象場景、針對特定任務設計的助手、知名人物，或者虛構角色。
 
 角色卡中唯一必填的項目是名稱欄位。若想與語言模型開始一般對話，您只需創建一個名稱為「Assistant」的新卡片，其餘欄位皆可保持空白。若希望進行更具主題性的對話，則可以提供語言模型背景資訊、行為模式、寫作風格以及特定情境來啟動聊天。
 
-如果您僅想進行快速對話而不選擇角色卡片，或想測試 LLM 的連線，則可在打開 SillyTavern 後，於歡迎頁面的輸入欄位中直接輸入您的提示內容。請注意，這類對話是暫時的，不會被永久保存。
+如果僅想進行快速對話而不選擇角色卡片，或想測試 LLM 的連線，則可在開啟 SillyTavern 後，於歡迎頁面的輸入欄位中直接輸入您的提示內容。請注意，這類對話是暫時的，不會被永久保存。
 
 若想了解如何設定角色卡，可參考預設角色（如 Seraphina）或從「下載擴充功能 & 資源」（Download Extensions & Assets）選單中下載社群製作的角色卡。
 
@@ -110,7 +110,7 @@ SillyTavern 支持多種擴充功能。
 * 聊天記錄自動摘要
 * 自動化介面與聊天翻譯
 * 穩定擴散（Stable Diffusion）、FLUX 和 DALL-E 的影像生成整合
-* 語音合成：AI 回應訊息可透過 ElevenLabs、Silero 或系統 TTS 語音合成
+* 語音合成（TTS）：AI 回應訊息可透過 ElevenLabs、Silero 或系統 TTS 語音合成
 * 網頁搜尋功能：為提示詞添加真實世界的上下文資訊
 * 更多擴展：可從「下載擴充功能 & 資源」（Download Extensions & Assets）選單中下載
 
@@ -367,7 +367,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 * 經授權使用部分來自 CncAnon 的 TavernAITurbo 模組
 * 視覺小說模式（Visual Novel Mode）的靈感，來源於 PepperTaco 的貢獻（<https://github.com/peppertaco/Tavern/>）
 * Noto Sans 字體由 Google 提供（OFL 許可）
-* 主題圖示由 Font Awesome <https://fontawesome.com> 提供（圖示：CC BY 4.0，字體：SIL OFL 1.1，代碼：MIT 許可）
+* 主題圖示由 Font Awesome <https://fontawesome.com> 提供（圖示：CC BY 4.0，字體：SIL OFL 1.1，程式碼：MIT 許可）
 * 預設資源來源於 @OtisAlejandro（包含角色 Seraphina 與知識書）與 @kallmeflocc（SillyTavern 官方 Discord 伺服器成員突破 10K 的慶祝背景）
 * Docker 安裝指南由 [@mrguymiah](https://github.com/mrguymiah) 和 [@Bronya-Rand](https://github.com/Bronya-Rand) 編寫
 
