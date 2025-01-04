@@ -121,11 +121,11 @@ async function generateThumbnail(directories, type, file) {
         let buffer;
 
         try {
-            const mySize = dimensions[type];
+            const size = dimensions[type];
             const image = await jimp.read(pathToOriginalFile);
             const imgType = type == 'avatar' && pngFormat ? 'image/png' : 'image/jpeg';
-            const width = !isNaN(mySize?.[0]) ? mySize[0] : image.bitmap.width;
-            const height = !isNaN(mySize?.[1]) ? mySize[1] : image.bitmap.height;
+            const width = !isNaN(size?.[0]) && size?.[0] > 0 ? size[0] : image.bitmap.width;
+            const height = !isNaN(size?.[1]) && size?.[1] > 0 ? size[1] : image.bitmap.height;
             buffer = await image.cover(width, height).quality(quality).getBufferAsync(imgType);
         }
         catch (inner) {
