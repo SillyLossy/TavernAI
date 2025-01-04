@@ -12,9 +12,12 @@ import { getAllUserHandles, getUserDirectories } from '../users.js';
 import { getConfigValue } from '../util.js';
 import { jsonParser } from '../express-common.js';
 
-const thumbnailsDisabled = getConfigValue('disableThumbnails', false);
-const quality = getConfigValue('thumbnailsQuality', 95);
-const pngFormat = getConfigValue('avatarThumbnailsPng', false);
+const thumbnailsEnabled = getConfigValue('thumbnails.enabled', false);
+const quality = getConfigValue('thumbnails.quality', 95);
+const pngFormat = getConfigValue('thumbnails.format', 'jpg') === 'png';
+
+/** @type {Record<string, number[]>} */
+const dimensions = getConfigValue('thumbnails.dimensions', { 'bg': [160, 90], 'avatar': [96, 144] });
 
 /**
  * Gets a path to thumbnail folder based on the type.
@@ -114,16 +117,16 @@ async function generateThumbnail(directories, type, file) {
         return null;
     }
 
-    const imageSizes = { 'bg': [160, 90], 'avatar': [96, 144] };
-    const mySize = imageSizes[type];
-
     try {
         let buffer;
 
         try {
+            const mySize = dimensions[type];
             const image = await jimp.read(pathToOriginalFile);
             const imgType = type == 'avatar' && pngFormat ? 'image/png' : 'image/jpeg';
-            buffer = await image.cover(mySize[0], mySize[1]).quality(quality).getBufferAsync(imgType);
+            const width = !isNaN(mySize?.[0]) ? mySize[0] : image.bitmap.width;
+            const height = !isNaN(mySize?.[1]) ? mySize[1] : image.bitmap.height;
+            buffer = await image.cover(width, height).quality(quality).getBufferAsync(imgType);
         }
         catch (inner) {
             console.warn(`Thumbnailer can not process the image: ${pathToOriginalFile}. Using original size`);
@@ -193,7 +196,7 @@ router.get('/', jsonParser, async function (request, response) {
             return response.sendStatus(403);
         }
 
-        if (thumbnailsDisabled) {
+        if (!thumbnailsEnabled) {
             const folder = getOriginalFolder(request.user.directories, type);
 
             if (folder === undefined) {
