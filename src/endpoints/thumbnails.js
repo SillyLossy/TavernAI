@@ -14,7 +14,7 @@ import { jsonParser } from '../express-common.js';
 
 const thumbnailsEnabled = !!getConfigValue('thumbnails.enabled', true);
 const quality = Math.min(100, Math.max(1, parseInt(getConfigValue('thumbnails.quality', 95))));
-const pngFormat = getConfigValue('thumbnails.format', 'jpg') === 'png';
+const pngFormat = String(getConfigValue('thumbnails.format', 'jpg')).toLowerCase().trim() === 'png';
 
 /** @type {Record<string, number[]>} */
 const dimensions = getConfigValue('thumbnails.dimensions', { 'bg': [160, 90], 'avatar': [96, 144] });
