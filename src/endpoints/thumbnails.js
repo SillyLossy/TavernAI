@@ -12,7 +12,7 @@ import { getAllUserHandles, getUserDirectories } from '../users.js';
 import { getConfigValue } from '../util.js';
 import { jsonParser } from '../express-common.js';
 
-const thumbnailsEnabled = getConfigValue('thumbnails.enabled', false);
+const thumbnailsEnabled = getConfigValue('thumbnails.enabled', true);
 const quality = getConfigValue('thumbnails.quality', 95);
 const pngFormat = getConfigValue('thumbnails.format', 'jpg') === 'png';
 
