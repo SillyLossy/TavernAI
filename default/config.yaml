@@ -91,7 +91,7 @@ thumbnails:
   # Image format of avatar thumbnails:
   # * "jpg": best compression with adjustable quality, no transparency
   # * "png": preserves transparency but increases filesize by about 100%
-  # Changing this only affects new thumbnails. To recreate the old ones, clear out your ST/thumbnails/ folder.
+  # Changing this only affects new thumbnails. To recreate the old ones, clear out /thumbnails folder in your user data.
   format: "jpg"
   # JPG thumbnail quality (0-100)
   quality: 95
