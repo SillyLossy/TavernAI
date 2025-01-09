@@ -451,7 +451,7 @@ export function evaluateMacros(content, env, postProcessFn) {
         ...getInstructMacros(env),
         ...getVariableMacros(),
         { regex: /{{newline}}/gi, replace: () => '\n' },
-        { regex: /(?:\r?\n)*{{trim}}(?:\r?\n)*/gi, replace: () => '' },
+        { regex: /(?:\s)*{{trim}}(?:\s)*/gi, replace: () => '' },
         { regex: /{{noop}}/gi, replace: () => '' },
         { regex: /{{input}}/gi, replace: () => String($('#send_textarea').val()) },
     ];
