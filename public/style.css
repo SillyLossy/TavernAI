@@ -2116,8 +2116,6 @@ body[data-stscript-style] .hljs.language-stscript {
                             content: "|";
                             color: var(--ac-color-text);
                         }
-
-                        ;
                     }
 
                     >.argument-types+.argument-enums,
@@ -2137,8 +2135,6 @@ body[data-stscript-style] .hljs.language-stscript {
                             content: "|";
                             color: var(--ac-color-text);
                         }
-
-                        ;
                     }
                 }
             }
@@ -5371,10 +5367,7 @@ body:not(.movingUI) .drawer-content.maximized {
     margin: 0;
     padding: 0;
     padding-top: 20px;
-
 }
-
-
 
 .timestamp {
     font-size: calc(var(--mainFontSize) * 0.7);
@@ -5554,7 +5547,6 @@ body:not(.movingUI) .drawer-content.maximized {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    ;
 }
 
 .faQuery-container {
@@ -5733,5 +5725,16 @@ body:not(.movingUI) .drawer-content.maximized {
         flex: 1;
         flex-basis: 100%;
     }
+}
 
+/* Constrict the scroll of alternate greetings, ensuring the "Add" button doesn't scroll away */
+.alternate_grettings {
+	display: grid;
+	grid-template-rows: auto auto auto 1fr;
+	max-height: 100%;
+	overflow: hidden;
+}
+
+.alternate_greetings_list {
+	overflow-y: scroll;
 }
