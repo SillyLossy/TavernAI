@@ -1520,7 +1520,7 @@
     "Saturates the world colors.": "Satura los colores del mundo.",
     "Makes the world warmer in color.": "Hace que el mundo sea más cálido en color.",
     "Character Tint Settings": "Configuración de tinte de sprites*",
-    "Enable Character Tint (Requires Prome to be enabled)": "Tinte de sprites",
+    "Enable Character Tint (Requires Prome to be enabled)": "Tinte de sprites (Requiere que Prome esté iniciado)",
     "Set the strength of the character blur.": "Establezca la fuerza del desenfoque de personajes.",
     "Set the brightness of the character.": "Establezca el brillo de personaje.",
     "Set the contrast of the character.": "Establezca el contraste de personajes.",
