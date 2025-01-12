@@ -5740,29 +5740,49 @@ body:not(.movingUI) .drawer-content.maximized {
 }
 
 /* Alternative slider layout */
-.sliders-container > .slider-container {
-	display: block;
-	flex-basis: initial;
+.sliders-container {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	gap: 10px 20px;
+
+	@media (width < 1000px) {
+		flex-direction: row;
+		align-items: center;
+	}
+
+.slider-container {
 	position: relative;
+	max-width: 300px;
+	
+	@media (width < 1000px) {
+		flex-grow: 1;
+	}
+	
+	> small {
+		display: block;
+		position: absolute;
+		top: 0px;
+		left: 90px;
+		white-space: nowrap;
+	}
+
+	> .neo-range-slider {
+		float: right;
+		width: calc(100% - 90px) !important;
+		display: block;
+		top: 13px;
+		position: relative;
+		border-radius: 0 !important;
+	}
+
+	> .neo-range-input {
+		float: left;
+		width: 80px;
+		border-radius: 0 !important;
+	}
 }
 
-.sliders-container > .slider-container > small {
-	display: block;
-	position: absolute;
-	top: 0px;
-	left: 110px;
-}
-
-.sliders-container > .slider-container > .neo-range-slider {
-	float: right;
-	width: calc(100% - 90px) !important;
-	display: block;
-	top: 13px;
-	position: relative;
-	border-radius: 0 !important;
-}
-
-.sliders-container > .slider-container > .neo-range-input {
-	float: left;
-	width: 80px;
+.sliders-hr {
+	margin: 15px 0 10px;
 }
