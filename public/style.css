@@ -5738,3 +5738,31 @@ body:not(.movingUI) .drawer-content.maximized {
 .alternate_greetings_list {
 	overflow-y: scroll;
 }
+
+/* Alternative slider layout */
+.sliders-container > .slider-container {
+	display: block;
+	flex-basis: initial;
+	position: relative;
+}
+
+.sliders-container > .slider-container > small {
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 110px;
+}
+
+.sliders-container > .slider-container > .neo-range-slider {
+	float: right;
+	width: calc(100% - 90px) !important;
+	display: block;
+	top: 13px;
+	position: relative;
+	border-radius: 0 !important;
+}
+
+.sliders-container > .slider-container > .neo-range-input {
+	float: left;
+	width: 80px;
+}
