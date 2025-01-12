@@ -5750,6 +5750,7 @@ body:not(.movingUI) .drawer-content.maximized {
         flex-direction: row;
         align-items: center;
     }
+}
 
 .slider-container {
     position: relative;
