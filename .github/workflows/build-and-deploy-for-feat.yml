@@ -28,7 +28,7 @@ jobs:
           echo ${{ github.repository }}
           echo ${{ github.ref_name }}
           tag=${{ github.sha }}
-          image=$(echo ${{ github.repository }} | sed 's/AhaAITeam\///')
+          image=$(echo ${{ github.repository }} | sed 's/duguyixiaono1\///')
           echo "IMAGE_NAME=$image" >> "$GITHUB_ENV"
           echo "TAG=$tag" >> "$GITHUB_ENV"
       - name: Cache Node.js modules
@@ -64,7 +64,7 @@ jobs:
           sed -i "s/IMAGE_NAME/$IMAGE_NAME/g" $DEPLOY_FILE
           sed -i "s/TAG/$TAG/g" $DEPLOY_FILE
           sed -i "s/AWS_ECR_HOST/${{ vars.AWS_ECR_HOST }}/g" $DEPLOY_FILE
-          sed -i "s/DOMAIN/${{ vars.DOMAIN }}/g" $DEPLOY_FILE
+          # sed -i "s/DOMAIN/${{ vars.DOMAIN }}/g" $DEPLOY_FILE
           # sed -i "s|AWS_ACM_ID|${{ vars.AWS_TEST_ACM_ID }}|g" $DEPLOY_FILE
 
           kubectl apply -f $DEPLOY_FILE
