@@ -78,4 +78,4 @@ spec:
             service:
               name: service-IMAGE_NAME
               port:
-                number: 8000
+                number: 80
