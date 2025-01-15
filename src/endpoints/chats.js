@@ -16,6 +16,9 @@ import {
     generateTimestamp,
     removeOldBackups,
     formatBytes,
+    logWarn,
+    logError,
+    logInfo,
 } from '../util.js';
 
 const isBackupEnabled = !!getConfigValue('backups.chat.enabled', true);
@@ -49,7 +52,7 @@ function backupChat(directory, name, chat) {
 
         removeOldBackups(directory, 'chat_', maxTotalChatBackups);
     } catch (err) {
-        console.log(`Could not backup chat for ${name}`, err);
+        logError(`Could not backup chat for ${name}`, err);
     }
 }
 
@@ -277,8 +280,8 @@ router.post('/save', jsonParser, function (request, response) {
         getBackupFunction(request.user.profile.handle)(request.user.directories.backups, directoryName, jsonlData);
         return response.send({ result: 'ok' });
     } catch (error) {
-        response.send(error);
-        return console.log(error);
+        logError(error);
+        return response.send(error);
     }
 });
 
@@ -313,7 +316,7 @@ router.post('/get', jsonParser, function (request, response) {
         const jsonData = lines.map((l) => { try { return JSON.parse(l); } catch (_) { return; } }).filter(x => x);
         return response.send(jsonData);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.send({});
     }
 });
@@ -330,17 +333,17 @@ router.post('/rename', jsonParser, async function (request, response) {
     const pathToOriginalFile = path.join(pathToFolder, sanitize(request.body.original_file));
     const pathToRenamedFile = path.join(pathToFolder, sanitize(request.body.renamed_file));
     const sanitizedFileName = path.parse(pathToRenamedFile).name;
-    console.log('Old chat name', pathToOriginalFile);
-    console.log('New chat name', pathToRenamedFile);
+    logInfo('Old chat name', pathToOriginalFile);
+    logInfo('New chat name', pathToRenamedFile);
 
     if (!fs.existsSync(pathToOriginalFile) || fs.existsSync(pathToRenamedFile)) {
-        console.log('Either Source or Destination files are not available');
+        logError('Either Source or Destination files are not available');
         return response.status(400).send({ error: true });
     }
 
     fs.copyFileSync(pathToOriginalFile, pathToRenamedFile);
     fs.rmSync(pathToOriginalFile);
-    console.log('Successfully renamed.');
+    logInfo('Successfully renamed.');
     return response.send({ ok: true, sanitizedFileName });
 });
 
@@ -351,12 +354,12 @@ router.post('/delete', jsonParser, function (request, response) {
     const chatFileExists = fs.existsSync(filePath);
 
     if (!chatFileExists) {
-        console.log(`Chat file not found '${filePath}'`);
+        logError(`Chat file not found '${filePath}'`);
         return response.sendStatus(400);
     }
 
     fs.rmSync(filePath);
-    console.log('Deleted chat file: ' + filePath);
+    logInfo('Deleted chat file: ' + filePath);
     return response.send('ok');
 });
 
@@ -373,7 +376,7 @@ router.post('/export', jsonParser, async function (request, response) {
         const errorMessage = {
             message: `Could not find JSONL file to export. Source chat file: ${filename}.`,
         };
-        console.log(errorMessage.message);
+        logError(errorMessage.message);
         return response.status(404).json(errorMessage);
     }
     try {
@@ -386,14 +389,14 @@ router.post('/export', jsonParser, async function (request, response) {
                     result: rawFile,
                 };
 
-                console.log(`Chat exported as ${exportfilename}`);
+                logInfo(`Chat exported as ${exportfilename}`);
                 return response.status(200).json(successMessage);
             } catch (err) {
-                console.error(err);
+                logError(err);
                 const errorMessage = {
                     message: `Could not read JSONL file to export. Source chat file: ${filename}.`,
                 };
-                console.log(errorMessage.message);
+                logError(errorMessage.message);
                 return response.status(500).json(errorMessage);
             }
         }
@@ -420,12 +423,11 @@ router.post('/export', jsonParser, async function (request, response) {
                 message: `Chat saved to ${exportfilename}`,
                 result: buffer,
             };
-            console.log(`Chat exported as ${exportfilename}`);
+            logInfo(`Chat exported as ${exportfilename}`);
             return response.status(200).json(successMessage);
         });
     } catch (err) {
-        console.log('chat export failed.');
-        console.log(err);
+        logError('chat export failed.', err);
         return response.sendStatus(400);
     }
 });
@@ -445,7 +447,7 @@ router.post('/group/import', urlencodedParser, function (request, response) {
         fs.unlinkSync(pathToUpload);
         return response.send({ res: chatname });
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.send({ error: true });
     }
 });
@@ -482,7 +484,7 @@ router.post('/import', urlencodedParser, function (request, response) {
             } else if (Array.isArray(jsonData.messages)) { // Agnai's format
                 importFunc = importAgnaiChat;
             } else { // Unknown format
-                console.log('Incorrect chat format .json');
+                logError('Incorrect chat format .json');
                 return response.send({ error: true });
             }
 
@@ -510,7 +512,7 @@ router.post('/import', urlencodedParser, function (request, response) {
             const jsonData = JSON.parse(header);
 
             if (!(jsonData.user_name !== undefined || jsonData.name !== undefined)) {
-                console.log('Incorrect chat format .jsonl');
+                logError('Incorrect chat format .jsonl');
                 return response.send({ error: true });
             }
 
@@ -522,7 +524,7 @@ router.post('/import', urlencodedParser, function (request, response) {
                 // import normal chats in an attempt to import a Chub chat
                 flattenedChat = flattenChubChat(userName, characterName, lines);
             } catch (error) {
-                console.warn('Failed to flatten Chub Chat data: ', error);
+                logWarn('Failed to flatten Chub Chat data: ', error);
             }
 
             const fileName = `${characterName} - ${humanizedISO8601DateTime()} imported.jsonl`;
@@ -536,7 +538,7 @@ router.post('/import', urlencodedParser, function (request, response) {
             response.send({ res: true });
         }
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.send({ error: true });
     }
 });
@@ -616,7 +618,7 @@ router.post('/search', jsonParser, function (request, response) {
                         break;
                     }
                 } catch (error) {
-                    console.error(groupFile, 'group file is corrupted:', error);
+                    logError(groupFile, 'group file is corrupted:', error);
                 }
             }
 
@@ -711,7 +713,7 @@ router.post('/search', jsonParser, function (request, response) {
         return response.send(results);
 
     } catch (error) {
-        console.error('Chat search error:', error);
+        logError('Chat search error:', error);
         return response.status(500).json({ error: 'Search failed' });
     }
 });

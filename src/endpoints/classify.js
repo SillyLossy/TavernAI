@@ -2,6 +2,7 @@ import express from 'express';
 
 import { getPipeline } from '../transformers.js';
 import { jsonParser } from '../express-common.js';
+import { logDebug, logError } from '../util.js';
 
 const TASK = 'text-classification';
 
@@ -18,7 +19,7 @@ router.post('/labels', jsonParser, async (req, res) => {
         const result = Object.keys(pipe.model.config.label2id);
         return res.json({ labels: result });
     } catch (error) {
-        console.error(error);
+        logError(error);
         return res.sendStatus(500);
     }
 });
@@ -44,13 +45,13 @@ router.post('/', jsonParser, async (req, res) => {
             }
         }
 
-        console.log('Classify input:', text);
+        logDebug('Classify input:', text);
         const result = await getResult(text);
-        console.log('Classify output:', result);
+        logDebug('Classify output:', result);
 
         return res.json({ classification: result });
     } catch (error) {
-        console.error(error);
+        logError(error);
         return res.sendStatus(500);
     }
 });

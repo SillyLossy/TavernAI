@@ -7,6 +7,7 @@ import { sync as writeFileAtomicSync } from 'write-file-atomic';
 
 import { getDefaultPresetFile, getDefaultPresets } from './content-manager.js';
 import { jsonParser } from '../express-common.js';
+import { logError } from '../util.js';
 
 /**
  * Gets the folder and extension for the preset settings based on the API source ID.
@@ -96,7 +97,7 @@ router.post('/restore', jsonParser, function (request, response) {
 
         return response.send(result);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });

@@ -9,7 +9,7 @@ import { jsonParser } from '../express-common.js';
 import { getUserAvatar, toKey, getPasswordHash, getPasswordSalt, createBackupArchive, ensurePublicDirectoriesExist, toAvatarKey } from '../users.js';
 import { SETTINGS_FILE } from '../constants.js';
 import { checkForNewContent, CONTENT_TYPES } from './content-manager.js';
-import { color, Cache } from '../util.js';
+import { color, Cache, logInfo, logError } from '../util.js';
 
 const RESET_CACHE = new Cache(5 * 60 * 1000);
 
@@ -18,7 +18,7 @@ export const router = express.Router();
 router.post('/logout', async (request, response) => {
     try {
         if (!request.session) {
-            console.error('Session not available');
+            logError('Session not available');
             return response.sendStatus(500);
         }
 
@@ -26,7 +26,7 @@ router.post('/logout', async (request, response) => {
         request.session = null;
         return response.sendStatus(204);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -49,7 +49,7 @@ router.get('/me', async (request, response) => {
 
         return response.json(viewModel);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -57,18 +57,18 @@ router.get('/me', async (request, response) => {
 router.post('/change-avatar', jsonParser, async (request, response) => {
     try {
         if (!request.body.handle) {
-            console.log('Change avatar failed: Missing required fields');
+            logError('Change avatar failed: Missing required fields');
             return response.status(400).json({ error: 'Missing required fields' });
         }
 
         if (request.body.handle !== request.user.profile.handle && !request.user.profile.admin) {
-            console.log('Change avatar failed: Unauthorized');
+            logError('Change avatar failed: Unauthorized');
             return response.status(403).json({ error: 'Unauthorized' });
         }
 
         // Avatar is not a data URL or not an empty string
         if (!request.body.avatar.startsWith('data:image/') && request.body.avatar !== '') {
-            console.log('Change avatar failed: Invalid data URL');
+            logError('Change avatar failed: Invalid data URL');
             return response.status(400).json({ error: 'Invalid data URL' });
         }
 
@@ -76,7 +76,7 @@ router.post('/change-avatar', jsonParser, async (request, response) => {
         const user = await storage.getItem(toKey(request.body.handle));
 
         if (!user) {
-            console.log('Change avatar failed: User not found');
+            logError('Change avatar failed: User not found');
             return response.status(404).json({ error: 'User not found' });
         }
 
@@ -84,7 +84,7 @@ router.post('/change-avatar', jsonParser, async (request, response) => {
 
         return response.sendStatus(204);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -92,12 +92,12 @@ router.post('/change-avatar', jsonParser, async (request, response) => {
 router.post('/change-password', jsonParser, async (request, response) => {
     try {
         if (!request.body.handle) {
-            console.log('Change password failed: Missing required fields');
+            logError('Change password failed: Missing required fields');
             return response.status(400).json({ error: 'Missing required fields' });
         }
 
         if (request.body.handle !== request.user.profile.handle && !request.user.profile.admin) {
-            console.log('Change password failed: Unauthorized');
+            logError('Change password failed: Unauthorized');
             return response.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -105,17 +105,17 @@ router.post('/change-password', jsonParser, async (request, response) => {
         const user = await storage.getItem(toKey(request.body.handle));
 
         if (!user) {
-            console.log('Change password failed: User not found');
+            logError('Change password failed: User not found');
             return response.status(404).json({ error: 'User not found' });
         }
 
         if (!user.enabled) {
-            console.log('Change password failed: User is disabled');
+            logError('Change password failed: User is disabled');
             return response.status(403).json({ error: 'User is disabled' });
         }
 
         if (!request.user.profile.admin && user.password && user.password !== getPasswordHash(request.body.oldPassword, user.salt)) {
-            console.log('Change password failed: Incorrect password');
+            logError('Change password failed: Incorrect password');
             return response.status(403).json({ error: 'Incorrect password' });
         }
 
@@ -131,7 +131,7 @@ router.post('/change-password', jsonParser, async (request, response) => {
         await storage.setItem(toKey(request.body.handle), user);
         return response.sendStatus(204);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -141,18 +141,18 @@ router.post('/backup', jsonParser, async (request, response) => {
         const handle = request.body.handle;
 
         if (!handle) {
-            console.log('Backup failed: Missing required fields');
+            logError('Backup failed: Missing required fields');
             return response.status(400).json({ error: 'Missing required fields' });
         }
 
         if (handle !== request.user.profile.handle && !request.user.profile.admin) {
-            console.log('Backup failed: Unauthorized');
+            logError('Backup failed: Unauthorized');
             return response.status(403).json({ error: 'Unauthorized' });
         }
 
         await createBackupArchive(handle, response);
     } catch (error) {
-        console.error('Backup failed', error);
+        logError('Backup failed', error);
         return response.sendStatus(500);
     }
 });
@@ -162,7 +162,7 @@ router.post('/reset-settings', jsonParser, async (request, response) => {
         const password = request.body.password;
 
         if (request.user.profile.password && request.user.profile.password !== getPasswordHash(password, request.user.profile.salt)) {
-            console.log('Reset settings failed: Incorrect password');
+            logError('Reset settings failed: Incorrect password');
             return response.status(403).json({ error: 'Incorrect password' });
         }
 
@@ -172,7 +172,7 @@ router.post('/reset-settings', jsonParser, async (request, response) => {
 
         return response.sendStatus(204);
     } catch (error) {
-        console.error('Reset settings failed', error);
+        logError('Reset settings failed', error);
         return response.sendStatus(500);
     }
 });
@@ -180,12 +180,12 @@ router.post('/reset-settings', jsonParser, async (request, response) => {
 router.post('/change-name', jsonParser, async (request, response) => {
     try {
         if (!request.body.name || !request.body.handle) {
-            console.log('Change name failed: Missing required fields');
+            logError('Change name failed: Missing required fields');
             return response.status(400).json({ error: 'Missing required fields' });
         }
 
         if (request.body.handle !== request.user.profile.handle && !request.user.profile.admin) {
-            console.log('Change name failed: Unauthorized');
+            logError('Change name failed: Unauthorized');
             return response.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -193,7 +193,7 @@ router.post('/change-name', jsonParser, async (request, response) => {
         const user = await storage.getItem(toKey(request.body.handle));
 
         if (!user) {
-            console.log('Change name failed: User not found');
+            logError('Change name failed: User not found');
             return response.status(404).json({ error: 'User not found' });
         }
 
@@ -202,7 +202,7 @@ router.post('/change-name', jsonParser, async (request, response) => {
 
         return response.sendStatus(204);
     } catch (error) {
-        console.error('Change name failed', error);
+        logError('Change name failed', error);
         return response.sendStatus(500);
     }
 });
@@ -210,13 +210,13 @@ router.post('/change-name', jsonParser, async (request, response) => {
 router.post('/reset-step1', jsonParser, async (request, response) => {
     try {
         const resetCode = String(crypto.randomInt(1000, 9999));
-        console.log();
-        console.log(color.magenta(`${request.user.profile.name}, your account reset code is: `) + color.red(resetCode));
-        console.log();
+        logInfo();
+        logInfo(color.magenta(`${request.user.profile.name}, your account reset code is: `) + color.red(resetCode));
+        logInfo();
         RESET_CACHE.set(request.user.profile.handle, resetCode);
         return response.sendStatus(204);
     } catch (error) {
-        console.error('Recover step 1 failed:', error);
+        logError('Recover step 1 failed:', error);
         return response.sendStatus(500);
     }
 });
@@ -224,23 +224,23 @@ router.post('/reset-step1', jsonParser, async (request, response) => {
 router.post('/reset-step2', jsonParser, async (request, response) => {
     try {
         if (!request.body.code) {
-            console.log('Recover step 2 failed: Missing required fields');
+            logError('Recover step 2 failed: Missing required fields');
             return response.status(400).json({ error: 'Missing required fields' });
         }
 
         if (request.user.profile.password && request.user.profile.password !== getPasswordHash(request.body.password, request.user.profile.salt)) {
-            console.log('Recover step 2 failed: Incorrect password');
+            logError('Recover step 2 failed: Incorrect password');
             return response.status(400).json({ error: 'Incorrect password' });
         }
 
         const code = RESET_CACHE.get(request.user.profile.handle);
 
         if (!code || code !== request.body.code) {
-            console.log('Recover step 2 failed: Incorrect code');
+            logError('Recover step 2 failed: Incorrect code');
             return response.status(400).json({ error: 'Incorrect code' });
         }
 
-        console.log('Resetting account data:', request.user.profile.handle);
+        logInfo('Resetting account data:', request.user.profile.handle);
         await fsPromises.rm(request.user.directories.root, { recursive: true, force: true });
 
         await ensurePublicDirectoriesExist();
@@ -249,7 +249,7 @@ router.post('/reset-step2', jsonParser, async (request, response) => {
         RESET_CACHE.remove(request.user.profile.handle);
         return response.sendStatus(204);
     } catch (error) {
-        console.error('Recover step 2 failed:', error);
+        logError('Recover step 2 failed:', error);
         return response.sendStatus(500);
     }
 });

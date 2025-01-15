@@ -6,6 +6,7 @@ import { speak, languages } from 'google-translate-api-x';
 import { readSecret, SECRET_KEYS } from './secrets.js';
 import { jsonParser } from '../express-common.js';
 import { GEMINI_SAFETY } from '../constants.js';
+import { logDebug, logError } from '../util.js';
 
 const API_MAKERSUITE = 'https://generativelanguage.googleapis.com';
 
@@ -34,7 +35,7 @@ router.post('/caption-image', jsonParser, async (request, response) => {
             generationConfig: { maxOutputTokens: 1000 },
         };
 
-        console.log('Multimodal captioning request', model, body);
+        logDebug('Multimodal captioning request', model, body);
 
         const result = await fetch(url, {
             body: JSON.stringify(body),
@@ -46,13 +47,13 @@ router.post('/caption-image', jsonParser, async (request, response) => {
 
         if (!result.ok) {
             const error = await result.json();
-            console.log(`Google AI Studio API returned error: ${result.status} ${result.statusText}`, error);
+            logError(`Google AI Studio API returned error: ${result.status} ${result.statusText}`, error);
             return response.status(result.status).send({ error: true });
         }
 
         /** @type {any} */
         const data = await result.json();
-        console.log('Multimodal captioning response', data);
+        logDebug('Multimodal captioning response', data);
 
         const candidates = data?.candidates;
         if (!candidates) {
@@ -66,7 +67,7 @@ router.post('/caption-image', jsonParser, async (request, response) => {
 
         return response.json({ caption });
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.status(500).send('Internal server error');
     }
 });
@@ -88,7 +89,7 @@ router.post('/generate-voice', jsonParser, async (request, response) => {
         response.setHeader('Content-Type', 'audio/mpeg');
         return response.send(buffer);
     } catch (error) {
-        console.error('Google Translate TTS generation failed', error);
+        logError('Google Translate TTS generation failed', error);
         response.status(500).send('Internal server error');
     }
 });

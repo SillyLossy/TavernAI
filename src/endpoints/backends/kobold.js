@@ -3,7 +3,7 @@ import express from 'express';
 import fetch from 'node-fetch';
 
 import { jsonParser, urlencodedParser } from '../../express-common.js';
-import { forwardFetchResponse, delay } from '../../util.js';
+import { forwardFetchResponse, delay, logInfo, logDebug, logError, logWarn } from '../../util.js';
 import { getOverrideHeaders, setAdditionalHeaders, setAdditionalHeadersByType } from '../../additional-headers.js';
 import { TEXTGEN_TYPES } from '../../constants.js';
 
@@ -22,17 +22,17 @@ router.post('/generate', jsonParser, async function (request, response_generate)
     request.socket.on('close', async function () {
         if (request.body.can_abort && !response_generate.writableEnded) {
             try {
-                console.log('Aborting Kobold generation...');
+                logInfo('Aborting Kobold generation...');
                 // send abort signal to koboldcpp
                 const abortResponse = await fetch(`${request.body.api_server}/extra/abort`, {
                     method: 'POST',
                 });
 
                 if (!abortResponse.ok) {
-                    console.log('Error sending abort request to Kobold:', abortResponse.status);
+                    logError('Error sending abort request to Kobold:', abortResponse.status);
                 }
             } catch (error) {
-                console.log(error);
+                logError(error);
             }
         }
         controller.abort();
@@ -81,7 +81,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
         }
     }
 
-    console.log(this_settings);
+    logDebug(this_settings);
     const args = {
         body: JSON.stringify(this_settings),
         headers: Object.assign(
@@ -105,7 +105,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
             } else {
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
+                    logError(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
 
                     try {
                         const errorJson = JSON.parse(errorText);
@@ -117,7 +117,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
                 }
 
                 const data = await response.json();
-                console.log('Endpoint response:', data);
+                logDebug('Endpoint response:', data);
                 return response_generate.send(data);
             }
         } catch (error) {
@@ -125,19 +125,19 @@ router.post('/generate', jsonParser, async function (request, response_generate)
             switch (error?.status) {
                 case 403:
                 case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
-                    console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
+                    logWarn(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
                     await delay(delayAmount);
                     break;
                 default:
                     if ('status' in error) {
-                        console.log('Status Code from Kobold:', error.status);
+                        logError('Status Code from Kobold:', error.status);
                     }
                     return response_generate.send({ error: true });
             }
         }
     }
 
-    console.log('Max retries exceeded. Giving up.');
+    logError('Max retries exceeded. Giving up.');
     return response_generate.send({ error: true });
 });
 
@@ -193,16 +193,16 @@ router.post('/transcribe-audio', urlencodedParser, async function (request, resp
         const server = request.body.server;
 
         if (!server) {
-            console.log('Server is not set');
+            logError('Server is not set');
             return response.sendStatus(400);
         }
 
         if (!request.file) {
-            console.log('No audio file found');
+            logError('No audio file found');
             return response.sendStatus(400);
         }
 
-        console.log('Transcribing audio with KoboldCpp', server);
+        logInfo('Transcribing audio with KoboldCpp', server);
 
         const fileBase64 = fs.readFileSync(request.file.path).toString('base64');
         fs.rmSync(request.file.path);
@@ -226,15 +226,15 @@ router.post('/transcribe-audio', urlencodedParser, async function (request, resp
 
         if (!result.ok) {
             const text = await result.text();
-            console.log('KoboldCpp request failed', result.statusText, text);
+            logError('KoboldCpp request failed', result.statusText, text);
             return response.status(500).send(text);
         }
 
         const data = await result.json();
-        console.log('KoboldCpp transcription response', data);
+        logDebug('KoboldCpp transcription response', data);
         return response.json(data);
     } catch (error) {
-        console.error('KoboldCpp transcription failed', error);
+        logError('KoboldCpp transcription failed', error);
         response.status(500).send('Internal server error');
     }
 });

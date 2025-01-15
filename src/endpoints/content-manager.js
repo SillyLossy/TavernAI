@@ -8,7 +8,7 @@ import fetch from 'node-fetch';
 import sanitize from 'sanitize-filename';
 import { sync as writeFileAtomicSync } from  'write-file-atomic';
 
-import { getConfigValue, color } from '../util.js';
+import { getConfigValue, color, logError, logInfo, logWarn } from '../util.js';
 import { jsonParser } from '../express-common.js';
 import { write } from '../character-card-parser.js';
 
@@ -71,7 +71,7 @@ export function getDefaultPresets(directories) {
 
         return presets;
     } catch (err) {
-        console.log('Failed to get default presets', err);
+        logError('Failed to get default presets', err);
         return [];
     }
 }
@@ -92,7 +92,7 @@ export function getDefaultPresetFile(filename) {
         const fileContent = fs.readFileSync(contentPath, 'utf8');
         return JSON.parse(fileContent);
     } catch (err) {
-        console.log(`Failed to get default file ${filename}`, err);
+        logError(`Failed to get default file ${filename}`, err);
         return null;
     }
 }
@@ -121,21 +121,21 @@ async function seedContentForUser(contentIndex, directories, forceCategories) {
         }
 
         if (!contentItem.folder) {
-            console.log(`Content file ${contentItem.filename} has no parent folder`);
+            logWarn(`Content file ${contentItem.filename} has no parent folder`);
             continue;
         }
 
         const contentPath = path.join(contentItem.folder, contentItem.filename);
 
         if (!fs.existsSync(contentPath)) {
-            console.log(`Content file ${contentItem.filename} is missing`);
+            logWarn(`Content file ${contentItem.filename} is missing`);
             continue;
         }
 
         const contentTarget = getTargetByType(contentItem.type, directories);
 
         if (!contentTarget) {
-            console.log(`Content file ${contentItem.filename} has unknown type ${contentItem.type}`);
+            logWarn(`Content file ${contentItem.filename} has unknown type ${contentItem.type}`);
             continue;
         }
 
@@ -144,12 +144,12 @@ async function seedContentForUser(contentIndex, directories, forceCategories) {
         contentLog.push(contentItem.filename);
 
         if (fs.existsSync(targetPath)) {
-            console.log(`Content file ${contentItem.filename} already exists in ${contentTarget}`);
+            logWarn(`Content file ${contentItem.filename} already exists in ${contentTarget}`);
             continue;
         }
 
         fs.cpSync(contentPath, targetPath, { recursive: true, force: false });
-        console.log(`Content file ${contentItem.filename} copied to ${contentTarget}`);
+        logInfo(`Content file ${contentItem.filename} copied to ${contentTarget}`);
         anyContentAdded = true;
     }
 
@@ -182,12 +182,12 @@ export async function checkForNewContent(directoriesList, forceCategories = []) 
         }
 
         if (anyContentAdded && !contentCheckSkip && forceCategories?.length === 0) {
-            console.log();
-            console.log(`${color.blue('If you don\'t want to receive content updates in the future, set')} ${color.yellow('skipContentCheck')} ${color.blue('to true in the config.yaml file.')}`);
-            console.log();
+            logInfo();
+            logInfo(`${color.blue('If you don\'t want to receive content updates in the future, set')} ${color.yellow('skipContentCheck')} ${color.blue('to true in the config.yaml file.')}`);
+            logInfo();
         }
     } catch (err) {
-        console.log('Content check failed', err);
+        logError('Content check failed', err);
     }
 }
 
@@ -331,7 +331,7 @@ async function downloadChubLorebook(id) {
 
     if (!result.ok) {
         const text = await result.text();
-        console.log('Chub returned error', result.statusText, text);
+        logError('Chub returned error', result.statusText, text);
         throw new Error('Failed to download lorebook');
     }
 
@@ -355,7 +355,7 @@ async function downloadChubCharacter(id) {
 
     if (!result.ok) {
         const text = await result.text();
-        console.log('Chub returned error', result.statusText, text);
+        logError('Chub returned error', result.statusText, text);
         throw new Error('Failed to download character');
     }
 
@@ -376,7 +376,7 @@ async function downloadPygmalionCharacter(id) {
 
     if (!result.ok) {
         const text = await result.text();
-        console.log('Pygsite returned error', result.status, text);
+        logError('Pygsite returned error', result.status, text);
         throw new Error('Failed to download character');
     }
 
@@ -385,7 +385,7 @@ async function downloadPygmalionCharacter(id) {
     const characterData = jsonData?.character;
 
     if (!characterData || typeof characterData !== 'object') {
-        console.error('Pygsite returned invalid character data', jsonData);
+        logError('Pygsite returned invalid character data', jsonData);
         throw new Error('Failed to download character');
     }
 
@@ -393,7 +393,7 @@ async function downloadPygmalionCharacter(id) {
         const avatarUrl = characterData?.data?.avatar;
 
         if (!avatarUrl) {
-            console.error('Pygsite character does not have an avatar', characterData);
+            logError('Pygsite character does not have an avatar', characterData);
             throw new Error('Failed to download avatar');
         }
 
@@ -408,7 +408,7 @@ async function downloadPygmalionCharacter(id) {
             fileType: 'image/png',
         };
     } catch (e) {
-        console.error('Failed to download avatar, using JSON instead', e);
+        logError('Failed to download avatar, using JSON instead', e);
         return {
             buffer: Buffer.from(JSON.stringify(jsonData)),
             fileName: `${sanitize(id)}.json`,
@@ -485,7 +485,7 @@ async function downloadJannyCharacter(uuid) {
         }
     }
 
-    console.log('Janny returned error', result.statusText, await result.text());
+    logError('Janny returned error', result.statusText, await result.text());
     throw new Error('Failed to download character');
 }
 
@@ -508,7 +508,7 @@ async function downloadAICCCharacter(id) {
             fileType: contentType,
         };
     } catch (error) {
-        console.error('Error downloading character:', error);
+        logError('Error downloading character:', error);
         throw error;
     }
 }
@@ -548,7 +548,7 @@ async function downloadGenericPng(url) {
             };
         }
     } catch (error) {
-        console.error('Error downloading file: ', error);
+        logError('Error downloading file: ', error);
         throw error;
     }
     return null;
@@ -577,7 +577,7 @@ async function downloadRisuCharacter(uuid) {
 
     if (!result.ok) {
         const text = await result.text();
-        console.log('RisuAI returned error', result.statusText, text);
+        logError('RisuAI returned error', result.statusText, text);
         throw new Error('Failed to download character');
     }
 
@@ -673,11 +673,11 @@ router.post('/importURL', jsonParser, async (request, response) => {
             type = chubParsed?.type;
 
             if (chubParsed?.type === 'character') {
-                console.log('Downloading chub character:', chubParsed.id);
+                logInfo('Downloading chub character:', chubParsed.id);
                 result = await downloadChubCharacter(chubParsed.id);
             }
             else if (chubParsed?.type === 'lorebook') {
-                console.log('Downloading chub lorebook:', chubParsed.id);
+                logInfo('Downloading chub lorebook:', chubParsed.id);
                 result = await downloadChubLorebook(chubParsed.id);
             }
             else {
@@ -692,7 +692,7 @@ router.post('/importURL', jsonParser, async (request, response) => {
             type = 'character';
             result = await downloadRisuCharacter(uuid);
         } else if (isGeneric) {
-            console.log('Downloading from generic url.');
+            logInfo('Downloading from generic url.');
             type = 'character';
             result = await downloadGenericPng(url);
         } else {
@@ -708,7 +708,7 @@ router.post('/importURL', jsonParser, async (request, response) => {
         response.set('X-Custom-Content-Type', type);
         return response.send(result.buffer);
     } catch (error) {
-        console.log('Importing custom content failed', error);
+        logError('Importing custom content failed', error);
         return response.sendStatus(500);
     }
 });
@@ -728,22 +728,22 @@ router.post('/importUUID', jsonParser, async (request, response) => {
         const uuidType = uuid.includes('lorebook') ? 'lorebook' : 'character';
 
         if (isPygmalion) {
-            console.log('Downloading Pygmalion character:', uuid);
+            logInfo('Downloading Pygmalion character:', uuid);
             result = await downloadPygmalionCharacter(uuid);
         } else if (isJannny) {
-            console.log('Downloading Janitor character:', uuid.split('_')[0]);
+            logInfo('Downloading Janitor character:', uuid.split('_')[0]);
             result = await downloadJannyCharacter(uuid.split('_')[0]);
         } else if (isAICC) {
             const [, author, card] = uuid.split('/');
-            console.log('Downloading AICC character:', `${author}/${card}`);
+            logInfo('Downloading AICC character:', `${author}/${card}`);
             result = await downloadAICCCharacter(`${author}/${card}`);
         } else {
             if (uuidType === 'character') {
-                console.log('Downloading chub character:', uuid);
+                logInfo('Downloading chub character:', uuid);
                 result = await downloadChubCharacter(uuid);
             }
             else if (uuidType === 'lorebook') {
-                console.log('Downloading chub lorebook:', uuid);
+                logInfo('Downloading chub lorebook:', uuid);
                 result = await downloadChubLorebook(uuid);
             }
             else {
@@ -756,7 +756,7 @@ router.post('/importUUID', jsonParser, async (request, response) => {
         response.set('X-Custom-Content-Type', uuidType);
         return response.send(result.buffer);
     } catch (error) {
-        console.log('Importing custom content failed', error);
+        logError('Importing custom content failed', error);
         return response.sendStatus(500);
     }
 });

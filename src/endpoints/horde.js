@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import express from 'express';
 import { AIHorde, ModelGenerationInputStableSamplers, ModelInterrogationFormTypes, HordeAsyncRequestStates } from '@zeldafan0225/ai_horde';
-import { getVersion, delay, Cache, getConfigValue } from '../util.js';
+import { getVersion, delay, Cache, logDebug, logError, logInfo, logWarn } from '../util.js';
 import { readSecret, SECRET_KEYS } from './secrets.js';
 import { jsonParser } from '../express-common.js';
 
@@ -74,7 +74,7 @@ router.post('/text-workers', jsonParser, async (request, response) => {
         cache.set('workers', data);
         return response.send(data);
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -116,13 +116,13 @@ router.post('/text-models', jsonParser, async (request, response) => {
             data = await mergeModelsAndMetadata(data, metadata);
         }
         catch (error) {
-            console.error('Failed to fetch metadata:', error);
+            logError('Failed to fetch metadata:', error);
         }
 
         cache.set('models', data);
         return response.send(data);
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -138,7 +138,7 @@ router.post('/status', jsonParser, async (_, response) => {
 
         return response.send({ ok: fetchResult.ok });
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -155,10 +155,10 @@ router.post('/cancel-task', jsonParser, async (request, response) => {
         });
 
         const data = await fetchResult.json();
-        console.log(`Cancelled Horde task ${taskId}`);
+        logInfo(`Cancelled Horde task ${taskId}`);
         return response.send(data);
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -174,10 +174,10 @@ router.post('/task-status', jsonParser, async (request, response) => {
         });
 
         const data = await fetchResult.json();
-        console.log(`Horde task ${taskId} status:`, data);
+        logInfo(`Horde task ${taskId} status:`, data);
         return response.send(data);
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -187,14 +187,7 @@ router.post('/generate-text', jsonParser, async (request, response) => {
     const url = 'https://aihorde.net/api/v2/generate/text/async';
     const agent = await getClientAgent();
 
-    if (getConfigValue('enablePromptLogging', true)) {
-        console.log(request.body);
-    } else {
-        const requestCopy = Object.assign({}, request.body);
-        delete requestCopy.prompt;
-
-        console.log(requestCopy);
-    }
+    logDebug(request.body);
 
     try {
         const result = await fetch(url, {
@@ -209,14 +202,14 @@ router.post('/generate-text', jsonParser, async (request, response) => {
 
         if (!result.ok) {
             const message = await result.text();
-            console.log('Horde returned an error:', message);
+            logError('Horde returned an error:', message);
             return response.send({ error: { message } });
         }
 
         const data = await result.json();
         return response.send(data);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.send({ error: true });
     }
 });
@@ -226,7 +219,7 @@ router.post('/sd-samplers', jsonParser, async (_, response) => {
         const samplers = Object.values(ModelGenerationInputStableSamplers);
         response.send(samplers);
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -237,7 +230,7 @@ router.post('/sd-models', jsonParser, async (_, response) => {
         const models = await ai_horde.getModels();
         response.send(models);
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -252,7 +245,7 @@ router.post('/caption-image', jsonParser, async (request, response) => {
         }, { token: api_key_horde });
 
         if (!result.id) {
-            console.error('Image interrogation request is not satisfyable:', result.message || 'unknown error');
+            logError('Image interrogation request is not satisfyable:', result.message || 'unknown error');
             return response.sendStatus(400);
         }
 
@@ -262,20 +255,20 @@ router.post('/caption-image', jsonParser, async (request, response) => {
         for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             await delay(CHECK_INTERVAL);
             const status = await ai_horde.getInterrogationStatus(result.id);
-            console.log(status);
+            logInfo(status);
 
             if (status.state === HordeAsyncRequestStates.done) {
 
                 if (status.forms === undefined) {
-                    console.error('Image interrogation request failed: no forms found.');
+                    logError('Image interrogation request failed: no forms found.');
                     return response.sendStatus(500);
                 }
 
-                console.log('Image interrogation result:', status);
+                logDebug('Image interrogation result:', status);
                 const caption = status?.forms[0]?.result?.caption || '';
 
                 if (!caption) {
-                    console.error('Image interrogation request failed: no caption found.');
+                    logError('Image interrogation request failed: no caption found.');
                     return response.sendStatus(500);
                 }
 
@@ -283,13 +276,13 @@ router.post('/caption-image', jsonParser, async (request, response) => {
             }
 
             if (status.state === HordeAsyncRequestStates.faulted || status.state === HordeAsyncRequestStates.cancelled) {
-                console.log('Image interrogation request is not successful.');
+                logError('Image interrogation request is not successful.');
                 return response.sendStatus(503);
             }
         }
 
     } catch (error) {
-        console.error(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -306,7 +299,7 @@ router.post('/user-info', jsonParser, async (request, response) => {
         const user = await ai_horde.findUser({ token: api_key_horde });
         return response.send(user);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -323,7 +316,7 @@ router.post('/generate-image', jsonParser, async (request, response) => {
     try {
         const maxLength = PROMPT_THRESHOLD - String(request.body.negative_prompt).length - 5;
         if (String(request.body.prompt).length > maxLength) {
-            console.log('Stable Horde prompt is too long, truncating...');
+            logWarn('Stable Horde prompt is too long, truncating...');
             request.body.prompt = String(request.body.prompt).substring(0, maxLength);
         }
 
@@ -332,7 +325,7 @@ router.post('/generate-image', jsonParser, async (request, response) => {
             const sanitized = sanitizeHordeImagePrompt(request.body.prompt);
 
             if (request.body.prompt !== sanitized) {
-                console.log('Stable Horde prompt was sanitized.');
+                logInfo('Stable Horde prompt was sanitized.');
             }
 
             request.body.prompt = sanitized;
@@ -340,15 +333,7 @@ router.post('/generate-image', jsonParser, async (request, response) => {
 
         const api_key_horde = readSecret(request.user.directories, SECRET_KEYS.HORDE) || ANONYMOUS_KEY;
 
-        if (getConfigValue('enablePromptLogging', true)) {
-            console.log('Stable Horde request:', request.body);
-        } else {
-            const requestCopy = Object.assign({}, request.body);
-            delete requestCopy.body.prompt;
-            delete requestCopy.body.negative_prompt
-
-            console.log('Stable Horde request:', requestCopy);
-        }
+        logDebug('Stable Horde request:', request.body);
 
         const ai_horde = await getHordeClient();
         // noinspection JSCheckFunctionSignatures -- see @ts-ignore - use_gfpgan
@@ -377,16 +362,16 @@ router.post('/generate-image', jsonParser, async (request, response) => {
             { token: api_key_horde });
 
         if (!generation.id) {
-            console.error('Image generation request is not satisfyable:', generation.message || 'unknown error');
+            logError('Image generation request is not satisfyable:', generation.message || 'unknown error');
             return response.sendStatus(400);
         }
 
-        console.log('Horde image generation request:', generation);
+        logDebug('Horde image generation request:', generation);
 
         const controller = new AbortController();
         request.socket.removeAllListeners('close');
         request.socket.on('close', function () {
-            console.log('Horde image generation request aborted.');
+            logInfo('Horde image generation request aborted.');
             controller.abort();
             if (generation.id) ai_horde.deleteImageGenerationRequest(generation.id);
         });
@@ -395,11 +380,15 @@ router.post('/generate-image', jsonParser, async (request, response) => {
             controller.signal.throwIfAborted();
             await delay(CHECK_INTERVAL);
             const check = await ai_horde.getImageGenerationCheck(generation.id);
-            console.log(check);
+            logInfo(check);
 
             if (check.done) {
                 const result = await ai_horde.getImageGenerationStatus(generation.id);
-                if (result.generations === undefined) return response.sendStatus(500);
+
+                if (result.generations === undefined) {
+                    return response.sendStatus(500);
+                }
+
                 return response.send(result.generations[0].img);
             }
 
@@ -416,7 +405,7 @@ router.post('/generate-image', jsonParser, async (request, response) => {
 
         return response.sendStatus(504);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });

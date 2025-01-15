@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { sync as writeFileAtomicSync } from 'write-file-atomic';
 
 import { SETTINGS_FILE } from '../constants.js';
-import { getConfigValue, generateTimestamp, removeOldBackups } from '../util.js';
+import { getConfigValue, generateTimestamp, removeOldBackups, logWarn, logError } from '../util.js';
 import { jsonParser } from '../express-common.js';
 import { getAllUserHandles, getUserDirectories } from '../users.js';
 
@@ -104,7 +104,7 @@ function readPresetsFromDirectory(directoryPath, options = {}) {
             fileNames.push(removeFileExtension ? item.replace(/\.[^/.]+$/, '') : item);
         } catch {
             // skip
-            console.log(`${item} is not a valid JSON`);
+            logWarn(`${item} is not a valid JSON`);
         }
     });
 
@@ -119,7 +119,7 @@ async function backupSettings() {
             backupUserSettings(handle, true);
         }
     } catch (err) {
-        console.log('Could not backup settings file', err);
+        logError('Could not backup settings file', err);
     }
 }
 
@@ -201,7 +201,7 @@ router.post('/save', jsonParser, function (request, response) {
         triggerAutoSave(request.user.profile.handle);
         response.send({ result: 'ok' });
     } catch (err) {
-        console.log(err);
+        logError(err);
         response.send(err);
     }
 });
@@ -291,7 +291,7 @@ router.post('/get-snapshots', jsonParser, async (request, response) => {
 
         response.json(result);
     } catch (error) {
-        console.log(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -315,7 +315,7 @@ router.post('/load-snapshot', jsonParser, async (request, response) => {
 
         response.send(content);
     } catch (error) {
-        console.log(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -325,7 +325,7 @@ router.post('/make-snapshot', jsonParser, async (request, response) => {
         backupUserSettings(request.user.profile.handle, false);
         response.sendStatus(204);
     } catch (error) {
-        console.log(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -351,7 +351,7 @@ router.post('/restore-snapshot', jsonParser, async (request, response) => {
 
         response.sendStatus(204);
     } catch (error) {
-        console.log(error);
+        logError(error);
         response.sendStatus(500);
     }
 });

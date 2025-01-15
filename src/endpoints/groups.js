@@ -6,7 +6,7 @@ import sanitize from 'sanitize-filename';
 import { sync as writeFileAtomicSync } from 'write-file-atomic';
 
 import { jsonParser } from '../express-common.js';
-import { humanizedISO8601DateTime } from '../util.js';
+import { humanizedISO8601DateTime, logError, logInfo } from '../util.js';
 
 export const router = express.Router();
 
@@ -47,7 +47,7 @@ router.post('/all', jsonParser, (request, response) => {
             groups.push(group);
         }
         catch (error) {
-            console.error(error);
+            logError(error);
         }
     });
 
@@ -114,7 +114,7 @@ router.post('/delete', jsonParser, async (request, response) => {
 
         if (group && Array.isArray(group.chats)) {
             for (const chat of group.chats) {
-                console.log('Deleting group chat', chat);
+                logInfo('Deleting group chat', chat);
                 const pathToFile = path.join(request.user.directories.groupChats, `${id}.jsonl`);
 
                 if (fs.existsSync(pathToFile)) {
@@ -123,7 +123,7 @@ router.post('/delete', jsonParser, async (request, response) => {
             }
         }
     } catch (error) {
-        console.error('Could not delete group chats. Clean them up manually.', error);
+        logError('Could not delete group chats. Clean them up manually.', error);
     }
 
     if (fs.existsSync(pathToGroup)) {

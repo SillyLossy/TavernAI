@@ -13,7 +13,7 @@ import { convertClaudePrompt } from '../prompt-converters.js';
 import { TEXTGEN_TYPES } from '../constants.js';
 import { jsonParser } from '../express-common.js';
 import { setAdditionalHeaders } from '../additional-headers.js';
-import { getConfigValue, isValidUrl } from '../util.js';
+import { getConfigValue, isValidUrl, logError, logInfo, logWarn } from '../util.js';
 
 /**
  * @typedef { (req: import('express').Request, res: import('express').Response) => Promise<any> } TokenizationHandler
@@ -96,7 +96,7 @@ async function getPathToTokenizer(model, fallbackModel) {
             throw new Error('Downloading tokenizers is disabled, the model is not cached');
         }
 
-        console.log('Downloading tokenizer model:', model);
+        logInfo('Downloading tokenizer model:', model);
         const response = await fetch(model);
         if (!response.ok) {
             throw new Error(`Failed to fetch the model: ${response.status} ${response.statusText}`);
@@ -108,7 +108,7 @@ async function getPathToTokenizer(model, fallbackModel) {
     } catch (error) {
         const getLastSegment = str => str?.split('/')?.pop() || '';
         if (fallbackModel) {
-            console.log(`Could not get a tokenizer from ${getLastSegment(model)}. Reason: ${error.message}. Using a fallback model: ${getLastSegment(fallbackModel)}.`);
+            logWarn(`Could not get a tokenizer from ${getLastSegment(model)}. Reason: ${error.message}. Using a fallback model: ${getLastSegment(fallbackModel)}.`);
             return fallbackModel;
         }
 
@@ -156,10 +156,10 @@ class SentencePieceTokenizer {
             const pathToModel = await getPathToTokenizer(this.#model, this.#fallbackModel);
             this.#instance = new SentencePieceProcessor();
             await this.#instance.load(pathToModel);
-            console.log('Instantiated the tokenizer for', path.parse(pathToModel).name);
+            logInfo('Instantiated the tokenizer for', path.parse(pathToModel).name);
             return this.#instance;
         } catch (error) {
-            console.error('Sentencepiece tokenizer failed to load: ' + this.#model, error);
+            logError('Sentencepiece tokenizer failed to load: ' + this.#model, error);
             return null;
         }
     }
@@ -205,10 +205,10 @@ class WebTokenizer {
             const pathToModel = await getPathToTokenizer(this.#model, this.#fallbackModel);
             const arrayBuffer = fs.readFileSync(pathToModel).buffer;
             this.#instance = await Tokenizer.fromJSON(arrayBuffer);
-            console.log('Instantiated the tokenizer for', path.parse(pathToModel).name);
+            logInfo('Instantiated the tokenizer for', path.parse(pathToModel).name);
             return this.#instance;
         } catch (error) {
-            console.error('Web tokenizer failed to load: ' + this.#model, error);
+            logError('Web tokenizer failed to load: ' + this.#model, error);
             return null;
         }
     }
@@ -442,7 +442,7 @@ export function getTiktokenTokenizer(model) {
     }
 
     const tokenizer = tiktoken.encoding_for_model(model);
-    console.log('Instantiated the tokenizer for', model);
+    logInfo('Instantiated the tokenizer for', model);
     tokenizersCache[model] = tokenizer;
     return tokenizer;
 }
@@ -489,7 +489,7 @@ function createSentencepieceEncodingHandler(tokenizer) {
             const chunks = instance?.encodePieces(text);
             return response.send({ ids, count, chunks });
         } catch (error) {
-            console.log(error);
+            logError(error);
             return response.send({ ids: [], count: 0, chunks: [] });
         }
     };
@@ -520,7 +520,7 @@ function createSentencepieceDecodingHandler(tokenizer) {
             const text = chunks.join('');
             return response.send({ text, chunks });
         } catch (error) {
-            console.log(error);
+            logError(error);
             return response.send({ text: '', chunks: [] });
         }
     };
@@ -549,7 +549,7 @@ function createTiktokenEncodingHandler(modelId) {
             const chunks = await getTiktokenChunks(tokenizer, tokens);
             return response.send({ ids: tokens, count: tokens.length, chunks });
         } catch (error) {
-            console.log(error);
+            logError(error);
             return response.send({ ids: [], count: 0, chunks: [] });
         }
     };
@@ -578,7 +578,7 @@ function createTiktokenDecodingHandler(modelId) {
             const text = new TextDecoder().decode(textBytes);
             return response.send({ text });
         } catch (error) {
-            console.log(error);
+            logError(error);
             return response.send({ text: '' });
         }
     };
@@ -608,7 +608,7 @@ function createWebTokenizerEncodingHandler(tokenizer) {
             const chunks = getWebTokenizersChunks(instance, tokens);
             return response.send({ ids: tokens, count: tokens.length, chunks });
         } catch (error) {
-            console.log(error);
+            logError(error);
             return response.send({ ids: [], count: 0, chunks: [] });
         }
     };
@@ -639,7 +639,7 @@ function createWebTokenizerDecodingHandler(tokenizer) {
             const text = instance.decode(new Int32Array(ids));
             return response.send({ text, chunks });
         } catch (error) {
-            console.log(error);
+            logError(error);
             return response.send({ text: '', chunks: [] });
         }
     };
@@ -739,7 +739,7 @@ router.post('/openai/encode', jsonParser, async function (req, res) {
         const handler = createTiktokenEncodingHandler(model);
         return handler(req, res);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return res.send({ ids: [], count: 0, chunks: [] });
     }
 });
@@ -807,7 +807,7 @@ router.post('/openai/decode', jsonParser, async function (req, res) {
         const handler = createTiktokenDecodingHandler(model);
         return handler(req, res);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return res.send({ text: '' });
     }
 });
@@ -903,7 +903,7 @@ router.post('/openai/count', jsonParser, async function (req, res) {
                     }
                 }
             } catch {
-                console.warn('Error tokenizing message:', msg);
+                logWarn('Error tokenizing message:', msg);
             }
         }
         num_tokens += tokensPadding;
@@ -919,7 +919,7 @@ router.post('/openai/count', jsonParser, async function (req, res) {
 
         res.send({ 'token_count': num_tokens });
     } catch (error) {
-        console.error('An error counting tokens, using fallback estimation method', error);
+        logWarn('An error counting tokens, using fallback estimation method', error);
         const jsonBody = JSON.stringify(req.body);
         const num_tokens = Math.ceil(jsonBody.length / CHARS_PER_TOKEN);
         res.send({ 'token_count': num_tokens });
@@ -946,7 +946,7 @@ router.post('/remote/kobold/count', jsonParser, async function (request, respons
         const result = await fetch(url, args);
 
         if (!result.ok) {
-            console.log(`API returned error: ${result.status} ${result.statusText}`);
+            logError(`API returned error: ${result.status} ${result.statusText}`);
             return response.send({ error: true });
         }
 
@@ -955,7 +955,7 @@ router.post('/remote/kobold/count', jsonParser, async function (request, respons
         const ids = data['ids'] ?? [];
         return response.send({ count, ids });
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.send({ error: true });
     }
 });
@@ -1010,7 +1010,7 @@ router.post('/remote/textgenerationwebui/encode', jsonParser, async function (re
         const result = await fetch(url, args);
 
         if (!result.ok) {
-            console.log(`API returned error: ${result.status} ${result.statusText}`);
+            logError(`API returned error: ${result.status} ${result.statusText}`);
             return response.send({ error: true });
         }
 
@@ -1020,7 +1020,7 @@ router.post('/remote/textgenerationwebui/encode', jsonParser, async function (re
 
         return response.send({ count, ids });
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.send({ error: true });
     }
 });

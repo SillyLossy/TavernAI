@@ -8,7 +8,7 @@ import { sync as writeFileAtomicSync } from 'write-file-atomic';
 
 import { jsonParser, urlencodedParser } from '../express-common.js';
 import { AVATAR_WIDTH, AVATAR_HEIGHT } from '../constants.js';
-import { getImages, tryParse } from '../util.js';
+import { getImages, logError, tryParse } from '../util.js';
 
 export const router = express.Router();
 
@@ -21,7 +21,7 @@ router.post('/delete', jsonParser, function (request, response) {
     if (!request.body) return response.sendStatus(400);
 
     if (request.body.avatar !== sanitize(request.body.avatar)) {
-        console.error('Malicious avatar name prevented');
+        logError('Malicious avatar name prevented');
         return response.sendStatus(403);
     }
 

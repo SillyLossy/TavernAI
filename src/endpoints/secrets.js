@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import express from 'express';
 import { sync as writeFileAtomicSync } from 'write-file-atomic';
-import { getConfigValue } from '../util.js';
+import { getConfigValue, logError } from '../util.js';
 import { jsonParser } from '../express-common.js';
 
 export const SECRETS_FILE = 'secrets.json';
@@ -151,7 +151,7 @@ export function getAllSecrets(directories) {
     const filePath = path.join(directories.root, SECRETS_FILE);
 
     if (!fs.existsSync(filePath)) {
-        console.log('Secrets file does not exist');
+        logError('Secrets file does not exist');
         return undefined;
     }
 
@@ -175,7 +175,7 @@ router.post('/read', jsonParser, (request, response) => {
         const state = readSecretState(request.user.directories);
         return response.send(state);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.send({});
     }
 });
@@ -184,7 +184,7 @@ router.post('/view', jsonParser, async (request, response) => {
     const allowKeysExposure = getConfigValue('allowKeysExposure', false);
 
     if (!allowKeysExposure) {
-        console.error('secrets.json could not be viewed unless the value of allowKeysExposure in config.yaml is set to true');
+        logError('secrets.json could not be viewed unless the value of allowKeysExposure in config.yaml is set to true');
         return response.sendStatus(403);
     }
 
@@ -197,7 +197,7 @@ router.post('/view', jsonParser, async (request, response) => {
 
         return response.send(secrets);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -207,7 +207,7 @@ router.post('/find', jsonParser, (request, response) => {
     const key = request.body.key;
 
     if (!allowKeysExposure && !EXPORTABLE_KEYS.includes(key)) {
-        console.error('Cannot fetch secrets unless allowKeysExposure in config.yaml is set to true');
+        logError('Cannot fetch secrets unless allowKeysExposure in config.yaml is set to true');
         return response.sendStatus(403);
     }
 
@@ -220,7 +220,7 @@ router.post('/find', jsonParser, (request, response) => {
 
         return response.send({ value: secret });
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });

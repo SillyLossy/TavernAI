@@ -6,7 +6,7 @@ import express from 'express';
 import sanitize from 'sanitize-filename';
 
 import { jsonParser } from '../express-common.js';
-import { clientRelativePath, removeFileExtension, getImages } from '../util.js';
+import { clientRelativePath, removeFileExtension, getImages, logError } from '../util.js';
 
 /**
  * Ensure the directory for the provided file path exists.
@@ -71,7 +71,7 @@ router.post('/upload', jsonParser, async (request, response) => {
         await fs.promises.writeFile(pathToNewFile, new Uint8Array(imageBuffer));
         response.send({ path: clientRelativePath(request.user.directories.root, pathToNewFile) });
     } catch (error) {
-        console.log(error);
+        logError(error);
         response.status(500).send({ error: 'Failed to save the image' });
     }
 });
@@ -87,7 +87,7 @@ router.post('/list/:folder', (request, response) => {
         const images = getImages(directoryPath, 'date');
         return response.send(images);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return response.status(500).send({ error: 'Unable to retrieve files' });
     }
 });

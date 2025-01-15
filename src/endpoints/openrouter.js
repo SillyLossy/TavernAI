@@ -1,5 +1,6 @@
 import express from 'express';
 import { jsonParser } from '../express-common.js';
+import { logError } from '../util.js';
 
 export const router = express.Router();
 const API_OPENROUTER = 'https://openrouter.ai/api/v1';
@@ -24,7 +25,7 @@ router.post('/models/multimodal', jsonParser, async (_req, res) => {
 
         return res.json(multimodalModels);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return res.sendStatus(500);
     }
 });

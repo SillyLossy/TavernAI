@@ -13,11 +13,16 @@ import _ from 'lodash';
 import yauzl from 'yauzl';
 import mime from 'mime-types';
 import { default as simpleGit } from 'simple-git';
+import { LOG_LEVELS } from './constants.js';
 
 /**
  * Parsed config object.
  */
 let CACHED_CONFIG = null;
+/**
+ * Minimum log level to show in terminal (Defaults to LOG_LEVELS.DEBUG)
+ */
+let MIN_LOG_LEVEL = Object.values(LOG_LEVELS).find(value => value === getConfigValue('minLogLevel', 0)) ?? LOG_LEVELS.DEBUG;
 
 /**
  * Returns the config object from the config.yaml file.
@@ -690,6 +695,67 @@ export function isValidUrl(url) {
     } catch (error) {
         return false;
     }
+}
+
+/**
+ * Tiered logger
+ * @param {Number} level LOG_LEVELS
+ * @param {any} message Message
+ * @param  {...any} args Arguments
+ */
+export function log(level, message, ...args) {
+    console.log(`level: ${level}, MIN_LOG_LEVEL: ${MIN_LOG_LEVEL}, config: ${getConfigValue('minLogLevel', 0)}`);
+    if (level >= MIN_LOG_LEVEL) {
+        if (level > LOG_LEVELS.WARN) {
+            console.error(message, ...args);
+        } else {
+            console.log(message, ...args);
+        }
+    }
+}
+
+/**
+ * Log a debug message
+ *
+ * logDebug() is an alias of log(LOG_LEVEL.DEBUG)
+ * @param {any} message Message
+ * @param  {...any} args Arguments
+ */
+export function logDebug(message, ...args) {
+    log(LOG_LEVELS.DEBUG, message, ...args);
+}
+
+/**
+ * Log an information message
+ *
+ * logDebug() is an alias of log(LOG_LEVEL.INFO)
+ * @param {any} message Message
+ * @param  {...any} args Arguments
+ */
+export function logInfo(message, ...args) {
+    log(LOG_LEVELS.DEBUG, message, ...args);
+}
+
+/**
+ * Log a warning message
+ *
+ * logDebug() is an alias of log(LOG_LEVEL.WARN)
+ * @param {any} message Message
+ * @param  {...any} args Arguments
+ */
+export function logWarn(message, ...args) {
+    log(LOG_LEVELS.WARN, message, ...args);
+}
+
+/**
+ * Log an error message
+ *
+ * logDebug() is an alias of log(LOG_LEVEL.ERROR)
+ * @param {any} message Message
+ * @param  {...any} args Arguments
+ */
+export function logError(message, ...args) {
+    log(LOG_LEVELS.ERROR, message, ...args);
 }
 
 /**

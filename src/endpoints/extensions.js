@@ -7,6 +7,7 @@ import { default as simpleGit } from 'simple-git';
 
 import { PUBLIC_DIRECTORIES } from '../constants.js';
 import { jsonParser } from '../express-common.js';
+import { logError, logInfo, logWarn, logDebug } from '../util.js';
 
 /**
  * This function extracts the extension information from the manifest file.
@@ -80,7 +81,7 @@ router.post('/install', jsonParser, async (request, response) => {
         const { url, global } = request.body;
 
         if (global && !request.user.profile.admin) {
-            console.warn(`User ${request.user.profile.handle} does not have permission to install global extensions.`);
+            logError(`User ${request.user.profile.handle} does not have permission to install global extensions.`);
             return response.status(403).send('Forbidden: No permission to install global extensions.');
         }
 
@@ -92,13 +93,13 @@ router.post('/install', jsonParser, async (request, response) => {
         }
 
         await git.clone(url, extensionPath, { '--depth': 1 });
-        console.log(`Extension has been cloned at ${extensionPath}`);
+        logInfo(`Extension has been cloned at ${extensionPath}`);
 
         const { version, author, display_name } = await getManifest(extensionPath);
 
         return response.send({ version, author, display_name, extensionPath });
     } catch (error) {
-        console.log('Importing custom content failed', error);
+        logError('Importing custom content failed', error);
         return response.status(500).send(`Server Error: ${error.message}`);
     }
 });
@@ -124,7 +125,7 @@ router.post('/update', jsonParser, async (request, response) => {
         const { extensionName, global } = request.body;
 
         if (global && !request.user.profile.admin) {
-            console.warn(`User ${request.user.profile.handle} does not have permission to update global extensions.`);
+            logError(`User ${request.user.profile.handle} does not have permission to update global extensions.`);
             return response.status(403).send('Forbidden: No permission to update global extensions.');
         }
 
@@ -139,9 +140,9 @@ router.post('/update', jsonParser, async (request, response) => {
         const currentBranch = await git.cwd(extensionPath).branch();
         if (!isUpToDate) {
             await git.cwd(extensionPath).pull('origin', currentBranch.current);
-            console.log(`Extension has been updated at ${extensionPath}`);
+            logInfo(`Extension has been updated at ${extensionPath}`);
         } else {
-            console.log(`Extension is up to date at ${extensionPath}`);
+            logInfo(`Extension is up to date at ${extensionPath}`);
         }
         await git.cwd(extensionPath).fetch('origin');
         const fullCommitHash = await git.cwd(extensionPath).revparse(['HEAD']);
@@ -150,7 +151,7 @@ router.post('/update', jsonParser, async (request, response) => {
         return response.send({ shortCommitHash, extensionPath, isUpToDate, remoteUrl });
 
     } catch (error) {
-        console.log('Updating custom content failed', error);
+        logError('Updating custom content failed', error);
         return response.status(500).send(`Server Error: ${error.message}`);
     }
 });
@@ -164,7 +165,7 @@ router.post('/move', jsonParser, async (request, response) => {
         }
 
         if (!request.user.profile.admin) {
-            console.warn(`User ${request.user.profile.handle} does not have permission to move extensions.`);
+            logWarn(`User ${request.user.profile.handle} does not have permission to move extensions.`);
             return response.status(403).send('Forbidden: No permission to move extensions.');
         }
 
@@ -174,27 +175,27 @@ router.post('/move', jsonParser, async (request, response) => {
         const destinationPath = path.join(destinationDirectory, sanitize(extensionName));
 
         if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isDirectory()) {
-            console.error(`Source directory does not exist at ${sourcePath}`);
+            logError(`Source directory does not exist at ${sourcePath}`);
             return response.status(404).send('Source directory does not exist.');
         }
 
         if (fs.existsSync(destinationPath)) {
-            console.error(`Destination directory already exists at ${destinationPath}`);
+            logError(`Destination directory already exists at ${destinationPath}`);
             return response.status(409).send('Destination directory already exists.');
         }
 
         if (source === destination) {
-            console.error('Source and destination directories are the same');
+            logError('Source and destination directories are the same');
             return response.status(409).send('Source and destination directories are the same.');
         }
 
         fs.cpSync(sourcePath, destinationPath, { recursive: true, force: true });
         fs.rmSync(sourcePath, { recursive: true, force: true });
-        console.log(`Extension has been moved from ${sourcePath} to ${destinationPath}`);
+        logInfo(`Extension has been moved from ${sourcePath} to ${destinationPath}`);
 
         return response.sendStatus(204);
     } catch (error) {
-        console.log('Moving extension failed', error);
+        logError('Moving extension failed', error);
         return response.status(500).send('Internal Server Error. Try again later.');
     }
 });
@@ -237,13 +238,13 @@ router.post('/version', jsonParser, async (request, response) => {
         // get only the working branch
         const currentBranchName = currentBranch.current;
         await git.cwd(extensionPath).fetch('origin');
-        console.log(extensionName, currentBranchName, currentCommitHash);
+        logDebug(extensionName, currentBranchName, currentCommitHash);
         const { isUpToDate, remoteUrl } = await checkIfRepoIsUpToDate(extensionPath);
 
         return response.send({ currentBranchName, currentCommitHash, isUpToDate, remoteUrl });
 
     } catch (error) {
-        console.log('Getting extension version failed', error);
+        logError('Getting extension version failed', error);
         return response.status(500).send(`Server Error: ${error.message}`);
     }
 });
@@ -265,7 +266,7 @@ router.post('/delete', jsonParser, async (request, response) => {
         const { extensionName, global } = request.body;
 
         if (global && !request.user.profile.admin) {
-            console.warn(`User ${request.user.profile.handle} does not have permission to delete global extensions.`);
+            logWarn(`User ${request.user.profile.handle} does not have permission to delete global extensions.`);
             return response.status(403).send('Forbidden: No permission to delete global extensions.');
         }
 
@@ -277,12 +278,12 @@ router.post('/delete', jsonParser, async (request, response) => {
         }
 
         await fs.promises.rm(extensionPath, { recursive: true });
-        console.log(`Extension has been deleted at ${extensionPath}`);
+        logInfo(`Extension has been deleted at ${extensionPath}`);
 
         return response.send(`Extension has been deleted at ${extensionPath}`);
 
     } catch (error) {
-        console.log('Deleting custom content failed', error);
+        logError('Deleting custom content failed', error);
         return response.status(500).send(`Server Error: ${error.message}`);
     }
 });
@@ -323,7 +324,7 @@ router.get('/discover', jsonParser, function (request, response) {
 
     // Combine all extensions
     const allExtensions = [...builtInExtensions, ...userExtensions, ...globalExtensions];
-    console.log('Extensions available for', request.user.profile.handle, allExtensions);
+    logInfo('Extensions available for', request.user.profile.handle, allExtensions);
 
     return response.send(allExtensions);
 });

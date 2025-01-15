@@ -9,7 +9,7 @@ import fetch from 'node-fetch';
 
 import { UNSAFE_EXTENSIONS } from '../constants.js';
 import { jsonParser } from '../express-common.js';
-import { clientRelativePath } from '../util.js';
+import { clientRelativePath, logDebug, logError } from '../util.js';
 
 const VALID_CATEGORIES = ['bgm', 'ambient', 'blip', 'live2d', 'vrm', 'character', 'temp'];
 
@@ -126,10 +126,10 @@ router.post('/get', jsonParser, async (request, response) => {
                     output[folder] = [];
                     const live2d_folder = path.normalize(path.join(folderPath, folder));
                     const files = getFiles(live2d_folder);
-                    //console.debug("FILE FOUND:",files)
+                    //logDebug("FILE FOUND:",files)
                     for (let file of files) {
                         if (file.includes('model') && file.endsWith('.json')) {
-                            //console.debug("Asset live2d model found:",file)
+                            //logDebug("Asset live2d model found:",file)
                             output[folder].push(clientRelativePath(request.user.directories.root, file));
                         }
                     }
@@ -142,10 +142,10 @@ router.post('/get', jsonParser, async (request, response) => {
                     // Extract models
                     const vrm_model_folder = path.normalize(path.join(folderPath, 'vrm', 'model'));
                     let files = getFiles(vrm_model_folder);
-                    //console.debug("FILE FOUND:",files)
+                    //logDebug("FILE FOUND:",files)
                     for (let file of files) {
                         if (!file.endsWith('.placeholder')) {
-                            //console.debug("Asset VRM model found:",file)
+                            //logDebug("Asset VRM model found:",file)
                             output['vrm']['model'].push(clientRelativePath(request.user.directories.root, file));
                         }
                     }
@@ -153,10 +153,10 @@ router.post('/get', jsonParser, async (request, response) => {
                     // Extract models
                     const vrm_animation_folder = path.normalize(path.join(folderPath, 'vrm', 'animation'));
                     files = getFiles(vrm_animation_folder);
-                    //console.debug("FILE FOUND:",files)
+                    //logDebug("FILE FOUND:",files)
                     for (let file of files) {
                         if (!file.endsWith('.placeholder')) {
-                            //console.debug("Asset VRM animation found:",file)
+                            //logDebug("Asset VRM animation found:",file)
                             output['vrm']['animation'].push(clientRelativePath(request.user.directories.root, file));
                         }
                     }
@@ -176,7 +176,7 @@ router.post('/get', jsonParser, async (request, response) => {
         }
     }
     catch (err) {
-        console.log(err);
+        logError(err);
     }
     return response.send(output);
 });
@@ -200,7 +200,7 @@ router.post('/download', jsonParser, async (request, response) => {
             category = i;
 
     if (category === null) {
-        console.debug('Bad request: unsupported asset category.');
+        logDebug('Bad request: unsupported asset category.');
         return response.sendStatus(400);
     }
 
@@ -212,7 +212,7 @@ router.post('/download', jsonParser, async (request, response) => {
 
     const temp_path = path.join(request.user.directories.assets, 'temp', request.body.filename);
     const file_path = path.join(request.user.directories.assets, category, request.body.filename);
-    console.debug('Request received to download', url, 'to', file_path);
+    logDebug('Request received to download', url, 'to', file_path);
 
     try {
         // Download to temp
@@ -241,13 +241,13 @@ router.post('/download', jsonParser, async (request, response) => {
         }
 
         // Move into asset place
-        console.debug('Download finished, moving file from', temp_path, 'to', file_path);
+        logDebug('Download finished, moving file from', temp_path, 'to', file_path);
         fs.copyFileSync(temp_path, file_path);
         fs.rmSync(temp_path);
         response.sendStatus(200);
     }
     catch (error) {
-        console.log(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -270,7 +270,7 @@ router.post('/delete', jsonParser, async (request, response) => {
             category = i;
 
     if (category === null) {
-        console.debug('Bad request: unsupported asset category.');
+        logDebug('Bad request: unsupported asset category.');
         return response.sendStatus(400);
     }
 
@@ -280,7 +280,7 @@ router.post('/delete', jsonParser, async (request, response) => {
         return response.status(400).send(validation.message);
 
     const file_path = path.join(request.user.directories.assets, category, request.body.filename);
-    console.debug('Request received to delete', category, file_path);
+    logDebug('Request received to delete', category, file_path);
 
     try {
         // Delete if previous download failed
@@ -288,17 +288,17 @@ router.post('/delete', jsonParser, async (request, response) => {
             fs.unlink(file_path, (err) => {
                 if (err) throw err;
             });
-            console.debug('Asset deleted.');
+            logDebug('Asset deleted.');
         }
         else {
-            console.debug('Asset not found.');
+            logDebug('Asset not found.');
             response.sendStatus(400);
         }
         // Move into asset place
         response.sendStatus(200);
     }
     catch (error) {
-        console.log(error);
+        logError(error);
         response.sendStatus(500);
     }
 });
@@ -325,7 +325,7 @@ router.post('/character', jsonParser, async (request, response) => {
             category = i;
 
     if (category === null) {
-        console.debug('Bad request: unsupported asset category.');
+        logDebug('Bad request: unsupported asset category.');
         return response.sendStatus(400);
     }
 
@@ -344,7 +344,7 @@ router.post('/character', jsonParser, async (request, response) => {
                     const modelFolder = folderInfo.name;
                     const live2dModelPath = path.join(folderPath, modelFolder);
                     for (let file of fs.readdirSync(live2dModelPath)) {
-                        //console.debug("Character live2d model found:", file)
+                        //logDebug("Character live2d model found:", file)
                         if (file.includes('model') && file.endsWith('.json'))
                             output.push(path.join('characters', name, category, modelFolder, file));
                     }
@@ -364,7 +364,7 @@ router.post('/character', jsonParser, async (request, response) => {
         return response.send(output);
     }
     catch (err) {
-        console.log(err);
+        logError(err);
         return response.sendStatus(500);
     }
 });

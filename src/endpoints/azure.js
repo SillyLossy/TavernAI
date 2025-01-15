@@ -3,6 +3,7 @@ import { Router } from 'express';
 
 import { readSecret, SECRET_KEYS } from './secrets.js';
 import { jsonParser } from '../express-common.js';
+import { logError } from '../util.js';
 
 export const router = Router();
 
@@ -11,14 +12,14 @@ router.post('/list', jsonParser, async (req, res) => {
         const key = readSecret(req.user.directories, SECRET_KEYS.AZURE_TTS);
 
         if (!key) {
-            console.error('Azure TTS API Key not set');
+            logError('Azure TTS API Key not set');
             return res.sendStatus(403);
         }
 
         const region = req.body.region;
 
         if (!region) {
-            console.error('Azure TTS region not set');
+            logError('Azure TTS region not set');
             return res.sendStatus(400);
         }
 
@@ -32,14 +33,14 @@ router.post('/list', jsonParser, async (req, res) => {
         });
 
         if (!response.ok) {
-            console.error('Azure Request failed', response.status, response.statusText);
+            logError('Azure Request failed', response.status, response.statusText);
             return res.sendStatus(500);
         }
 
         const voices = await response.json();
         return res.json(voices);
     } catch (error) {
-        console.error('Azure Request failed', error);
+        logError('Azure Request failed', error);
         return res.sendStatus(500);
     }
 });
@@ -49,13 +50,13 @@ router.post('/generate', jsonParser, async (req, res) => {
         const key = readSecret(req.user.directories, SECRET_KEYS.AZURE_TTS);
 
         if (!key) {
-            console.error('Azure TTS API Key not set');
+            logError('Azure TTS API Key not set');
             return res.sendStatus(403);
         }
 
         const { text, voice, region } = req.body;
         if (!text || !voice || !region) {
-            console.error('Missing required parameters');
+            logError('Missing required parameters');
             return res.sendStatus(400);
         }
 
@@ -75,7 +76,7 @@ router.post('/generate', jsonParser, async (req, res) => {
         });
 
         if (!response.ok) {
-            console.error('Azure Request failed', response.status, response.statusText);
+            logError('Azure Request failed', response.status, response.statusText);
             return res.sendStatus(500);
         }
 
@@ -83,7 +84,7 @@ router.post('/generate', jsonParser, async (req, res) => {
         res.set('Content-Type', 'audio/ogg');
         return res.send(audio);
     } catch (error) {
-        console.error('Azure Request failed', error);
+        logError('Azure Request failed', error);
         return res.sendStatus(500);
     }
 });

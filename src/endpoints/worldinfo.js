@@ -6,6 +6,7 @@ import sanitize from 'sanitize-filename';
 import { sync as writeFileAtomicSync } from 'write-file-atomic';
 
 import { jsonParser, urlencodedParser } from '../express-common.js';
+import { logWarn } from '../util.js';
 
 /**
  * Reads a World Info file and returns its contents
@@ -25,7 +26,7 @@ export function readWorldInfoFile(directories, worldInfoName, allowDummy) {
     const pathToWorldInfo = path.join(directories.worlds, filename);
 
     if (!fs.existsSync(pathToWorldInfo)) {
-        console.log(`World info file ${filename} doesn't exist.`);
+        logWarn(`World info file ${filename} doesn't exist.`);
         return dummyObject;
     }
 

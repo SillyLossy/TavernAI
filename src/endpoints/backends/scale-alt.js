@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 
 import { jsonParser } from '../../express-common.js';
 import { readSecret, SECRET_KEYS } from '../secrets.js';
+import { logDebug, logError } from '../../util.js';
 
 export const router = express.Router();
 
@@ -13,7 +14,7 @@ router.post('/generate', jsonParser, async function (request, response) {
         const cookie = readSecret(request.user.directories, SECRET_KEYS.SCALE_COOKIE);
 
         if (!cookie) {
-            console.log('No Scale cookie found');
+            logError('No Scale cookie found');
             return response.sendStatus(400);
         }
 
@@ -62,7 +63,7 @@ router.post('/generate', jsonParser, async function (request, response) {
             },
         };
 
-        console.log('Scale request:', body);
+        logDebug('Scale request:', body);
 
         const result = await fetch('https://dashboard.scale.com/spellbook/api/trpc/v2.variant.run', {
             method: 'POST',
@@ -75,7 +76,7 @@ router.post('/generate', jsonParser, async function (request, response) {
 
         if (!result.ok) {
             const text = await result.text();
-            console.log('Scale request failed', result.statusText, text);
+            logError('Scale request failed', result.statusText, text);
             return response.status(500).send({ error: { message: result.statusText } });
         }
 
@@ -83,16 +84,16 @@ router.post('/generate', jsonParser, async function (request, response) {
         const data = await result.json();
         const output = data?.result?.data?.json?.outputs?.[0] || '';
 
-        console.log('Scale response:', data);
+        logDebug('Scale response:', data);
 
         if (!output) {
-            console.warn('Scale response is empty');
+            logError('Scale response is empty');
             return response.sendStatus(500).send({ error: { message: 'Empty response' } });
         }
 
         return response.json({ output });
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });

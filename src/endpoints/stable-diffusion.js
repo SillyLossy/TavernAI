@@ -9,7 +9,7 @@ import FormData from 'form-data';
 import urlJoin from 'url-join';
 import _ from 'lodash';
 
-import { delay, getBasicAuthHeader, tryParse } from '../util.js';
+import { delay, getBasicAuthHeader, logDebug, logError, logInfo, logWarn, tryParse } from '../util.js';
 import { jsonParser } from '../express-common.js';
 import { readSecret, SECRET_KEYS } from './secrets.js';
 
@@ -45,7 +45,7 @@ router.post('/ping', jsonParser, async (request, response) => {
 
         return response.sendStatus(200);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -99,7 +99,7 @@ router.post('/upscalers', jsonParser, async (request, response) => {
 
         return response.send(upscalers);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -131,7 +131,7 @@ router.post('/vaes', jsonParser, async (request, response) => {
         const names = data.map(x => x.model_name);
         return response.send(names);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -158,7 +158,7 @@ router.post('/samplers', jsonParser, async (request, response) => {
         return response.send(names);
 
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -184,7 +184,7 @@ router.post('/schedulers', jsonParser, async (request, response) => {
         const names = data.map(x => x.name);
         return response.send(names);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -210,7 +210,7 @@ router.post('/models', jsonParser, async (request, response) => {
         const models = data.map(x => ({ value: x.title, text: x.title }));
         return response.send(models);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -230,7 +230,7 @@ router.post('/get-model', jsonParser, async (request, response) => {
         const data = await result.json();
         return response.send(data['sd_model_checkpoint']);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -283,13 +283,13 @@ router.post('/set-model', jsonParser, async (request, response) => {
                 break;
             }
 
-            console.log(`Waiting for SD WebUI to finish model loading... Progress: ${progress}; Job count: ${jobCount}`);
+            logInfo(`Waiting for SD WebUI to finish model loading... Progress: ${progress}; Job count: ${jobCount}`);
             await delay(CHECK_INTERVAL);
         }
 
         return response.sendStatus(200);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -309,7 +309,7 @@ router.post('/generate', jsonParser, async (request, response) => {
                 }
             }
         } catch (error) {
-            console.log('SD WebUI failed to get options:', error);
+            logWarn('SD WebUI failed to get options:', error);
         }
 
         const controller = new AbortController();
@@ -323,7 +323,7 @@ router.post('/generate', jsonParser, async (request, response) => {
             controller.abort();
         });
 
-        console.log('SD WebUI request:', request.body);
+        logDebug('SD WebUI request:', request.body);
         const txt2imgUrl = new URL(request.body.url);
         txt2imgUrl.pathname = '/sdapi/v1/txt2img';
         const result = await fetch(txt2imgUrl, {
@@ -344,7 +344,7 @@ router.post('/generate', jsonParser, async (request, response) => {
         const data = await result.json();
         return response.send(data);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -377,7 +377,7 @@ router.post('/sd-next/upscalers', jsonParser, async (request, response) => {
 
         return response.send(names);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -395,7 +395,7 @@ comfy.post('/ping', jsonParser, async (request, response) => {
 
         return response.sendStatus(200);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -413,7 +413,7 @@ comfy.post('/samplers', jsonParser, async (request, response) => {
         const data = await result.json();
         return response.send(data.KSampler.input.required.sampler_name[0]);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -441,7 +441,7 @@ comfy.post('/models', jsonParser, async (request, response) => {
 
         return response.send(models);
     } catch (error)     {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -459,7 +459,7 @@ comfy.post('/schedulers', jsonParser, async (request, response) => {
         const data = await result.json();
         return response.send(data.KSampler.input.required.scheduler[0]);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -477,7 +477,7 @@ comfy.post('/vaes', jsonParser, async (request, response) => {
         const data = await result.json();
         return response.send(data.VAELoader.input.required.vae_name[0]);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -487,7 +487,7 @@ comfy.post('/workflows', jsonParser, async (request, response) => {
         const data = getComfyWorkflows(request.user.directories);
         return response.send(data);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -501,7 +501,7 @@ comfy.post('/workflow', jsonParser, async (request, response) => {
         const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
         return response.send(JSON.stringify(data));
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -513,7 +513,7 @@ comfy.post('/save-workflow', jsonParser, async (request, response) => {
         const data = getComfyWorkflows(request.user.directories);
         return response.send(data);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -526,7 +526,7 @@ comfy.post('/delete-workflow', jsonParser, async (request, response) => {
         }
         return response.sendStatus(200);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -591,7 +591,7 @@ comfy.post('/generate', jsonParser, async (request, response) => {
         const imgBuffer = await imgResponse.arrayBuffer();
         return response.send(Buffer.from(imgBuffer).toString('base64'));
     } catch (error) {
-        console.log('ComfyUI error:', error);
+        logError('ComfyUI error:', error);
         response.status(500).send(error.message);
         return response;
     }
@@ -604,7 +604,7 @@ together.post('/models', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.TOGETHERAI);
 
         if (!key) {
-            console.log('TogetherAI key not found.');
+            logError('TogetherAI key not found.');
             return response.sendStatus(400);
         }
 
@@ -616,14 +616,14 @@ together.post('/models', jsonParser, async (request, response) => {
         });
 
         if (!modelsResponse.ok) {
-            console.log('TogetherAI returned an error.');
+            logError('TogetherAI returned an error.');
             return response.sendStatus(500);
         }
 
         const data = await modelsResponse.json();
 
         if (!Array.isArray(data)) {
-            console.log('TogetherAI returned invalid data.');
+            logError('TogetherAI returned invalid data.');
             return response.sendStatus(500);
         }
 
@@ -633,7 +633,7 @@ together.post('/models', jsonParser, async (request, response) => {
 
         return response.send(models);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -643,11 +643,11 @@ together.post('/generate', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.TOGETHERAI);
 
         if (!key) {
-            console.log('TogetherAI key not found.');
+            logError('TogetherAI key not found.');
             return response.sendStatus(400);
         }
 
-        console.log('TogetherAI request:', request.body);
+        logDebug('TogetherAI request:', request.body);
 
         const result = await fetch('https://api.together.xyz/v1/images/generations', {
             method: 'POST',
@@ -669,13 +669,13 @@ together.post('/generate', jsonParser, async (request, response) => {
         });
 
         if (!result.ok) {
-            console.log('TogetherAI returned an error.', { body: await result.text() });
+            logDebug('TogetherAI returned an error.', { body: await result.text() });
             return response.sendStatus(500);
         }
 
         /** @type {any} */
         const data = await result.json();
-        console.log('TogetherAI response:', data);
+        logDebug('TogetherAI response:', data);
 
         const choice = data?.data?.[0];
         let b64_json = choice.b64_json;
@@ -687,7 +687,7 @@ together.post('/generate', jsonParser, async (request, response) => {
 
         return response.send({ format: 'jpg', data: b64_json });
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -709,7 +709,7 @@ drawthings.post('/ping', jsonParser, async (request, response) => {
 
         return response.sendStatus(200);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -728,7 +728,7 @@ drawthings.post('/get-model', jsonParser, async (request, response) => {
 
         return response.send(data['model']);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -747,14 +747,14 @@ drawthings.post('/get-upscaler', jsonParser, async (request, response) => {
 
         return response.send(data['upscaler']);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
 
 drawthings.post('/generate', jsonParser, async (request, response) => {
     try {
-        console.log('SD DrawThings API request:', request.body);
+        logDebug('SD DrawThings API request:', request.body);
 
         const url = new URL(request.body.url);
         url.pathname = '/sdapi/v1/txt2img';
@@ -781,7 +781,7 @@ drawthings.post('/generate', jsonParser, async (request, response) => {
         const data = await result.json();
         return response.send(data);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -794,21 +794,21 @@ pollinations.post('/models', jsonParser, async (_request, response) => {
         const result = await fetch(modelsUrl);
 
         if (!result.ok) {
-            console.log('Pollinations returned an error.', result.status, result.statusText);
+            logError('Pollinations returned an error.', result.status, result.statusText);
             throw new Error('Pollinations request failed.');
         }
 
         const data = await result.json();
 
         if (!Array.isArray(data)) {
-            console.log('Pollinations returned invalid data.');
+            logError('Pollinations returned invalid data.');
             throw new Error('Pollinations request failed.');
         }
 
         const models = data.map(x => ({ value: x, text: x }));
         return response.send(models);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -829,12 +829,12 @@ pollinations.post('/generate', jsonParser, async (request, response) => {
         });
         promptUrl.search = params.toString();
 
-        console.log('Pollinations request URL:', promptUrl.toString());
+        logDebug('Pollinations request URL:', promptUrl.toString());
 
         const result = await fetch(promptUrl);
 
         if (!result.ok) {
-            console.log('Pollinations returned an error.', result.status, result.statusText);
+            logError('Pollinations returned an error.', result.status, result.statusText);
             throw new Error('Pollinations request failed.');
         }
 
@@ -843,7 +843,7 @@ pollinations.post('/generate', jsonParser, async (request, response) => {
 
         return response.send({ image: base64 });
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -855,13 +855,13 @@ stability.post('/generate', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.STABILITY);
 
         if (!key) {
-            console.log('Stability AI key not found.');
+            logError('Stability AI key not found.');
             return response.sendStatus(400);
         }
 
         const { payload, model } = request.body;
 
-        console.log('Stability AI request:', model, payload);
+        logDebug('Stability AI request:', model, payload);
 
         const formData = new FormData();
         for (const [key, value] of Object.entries(payload)) {
@@ -896,14 +896,14 @@ stability.post('/generate', jsonParser, async (request, response) => {
 
         if (!result.ok) {
             const text = await result.text();
-            console.log('Stability AI returned an error.', result.status, result.statusText, text);
+            logError('Stability AI returned an error.', result.status, result.statusText, text);
             return response.sendStatus(500);
         }
 
         const buffer = await result.arrayBuffer();
         return response.send(Buffer.from(buffer).toString('base64'));
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -915,7 +915,7 @@ blockentropy.post('/models', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.BLOCKENTROPY);
 
         if (!key) {
-            console.log('Block Entropy key not found.');
+            logError('Block Entropy key not found.');
             return response.sendStatus(400);
         }
 
@@ -927,21 +927,21 @@ blockentropy.post('/models', jsonParser, async (request, response) => {
         });
 
         if (!modelsResponse.ok) {
-            console.log('Block Entropy returned an error.');
+            logError('Block Entropy returned an error.');
             return response.sendStatus(500);
         }
 
         const data = await modelsResponse.json();
 
         if (!Array.isArray(data)) {
-            console.log('Block Entropy returned invalid data.');
+            logError('Block Entropy returned invalid data.');
             return response.sendStatus(500);
         }
         const models = data.map(x => ({ value: x.name, text: x.name }));
         return response.send(models);
 
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -951,11 +951,11 @@ blockentropy.post('/generate', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.BLOCKENTROPY);
 
         if (!key) {
-            console.log('Block Entropy key not found.');
+            logError('Block Entropy key not found.');
             return response.sendStatus(400);
         }
 
-        console.log('Block Entropy request:', request.body);
+        logDebug('Block Entropy request:', request.body);
 
         const result = await fetch('https://api.blockentropy.ai/sdapi/v1/txt2img', {
             method: 'POST',
@@ -976,16 +976,16 @@ blockentropy.post('/generate', jsonParser, async (request, response) => {
         });
 
         if (!result.ok) {
-            console.log('Block Entropy returned an error.');
+            logError('Block Entropy returned an error.');
             return response.sendStatus(500);
         }
 
         const data = await result.json();
-        console.log('Block Entropy response:', data);
+        logDebug('Block Entropy response:', data);
 
         return response.send(data);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -998,11 +998,11 @@ huggingface.post('/generate', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.HUGGINGFACE);
 
         if (!key) {
-            console.log('Hugging Face key not found.');
+            logError('Hugging Face key not found.');
             return response.sendStatus(400);
         }
 
-        console.log('Hugging Face request:', request.body);
+        logDebug('Hugging Face request:', request.body);
 
         const result = await fetch(`https://api-inference.huggingface.co/models/${request.body.model}`, {
             method: 'POST',
@@ -1016,7 +1016,7 @@ huggingface.post('/generate', jsonParser, async (request, response) => {
         });
 
         if (!result.ok) {
-            console.log('Hugging Face returned an error.');
+            logError('Hugging Face returned an error.');
             return response.sendStatus(500);
         }
 
@@ -1025,7 +1025,7 @@ huggingface.post('/generate', jsonParser, async (request, response) => {
             image: Buffer.from(buffer).toString('base64'),
         });
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -1037,7 +1037,7 @@ nanogpt.post('/models', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.NANOGPT);
 
         if (!key) {
-            console.log('NanoGPT key not found.');
+            logError('NanoGPT key not found.');
             return response.sendStatus(400);
         }
 
@@ -1050,7 +1050,7 @@ nanogpt.post('/models', jsonParser, async (request, response) => {
         });
 
         if (!modelsResponse.ok) {
-            console.log('NanoGPT returned an error.');
+            logError('NanoGPT returned an error.');
             return response.sendStatus(500);
         }
 
@@ -1059,7 +1059,7 @@ nanogpt.post('/models', jsonParser, async (request, response) => {
         const imageModels = data?.models?.image;
 
         if (!imageModels || typeof imageModels !== 'object') {
-            console.log('NanoGPT returned invalid data.');
+            logError('NanoGPT returned invalid data.');
             return response.sendStatus(500);
         }
 
@@ -1067,7 +1067,7 @@ nanogpt.post('/models', jsonParser, async (request, response) => {
         return response.send(models);
     }
     catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -1077,11 +1077,11 @@ nanogpt.post('/generate', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.NANOGPT);
 
         if (!key) {
-            console.log('NanoGPT key not found.');
+            logError('NanoGPT key not found.');
             return response.sendStatus(400);
         }
 
-        console.log('NanoGPT request:', request.body);
+        logDebug('NanoGPT request:', request.body);
 
         const result = await fetch('https://nano-gpt.com/api/generate-image', {
             method: 'POST',
@@ -1093,7 +1093,7 @@ nanogpt.post('/generate', jsonParser, async (request, response) => {
         });
 
         if (!result.ok) {
-            console.log('NanoGPT returned an error.');
+            logError('NanoGPT returned an error.');
             return response.sendStatus(500);
         }
 
@@ -1102,14 +1102,14 @@ nanogpt.post('/generate', jsonParser, async (request, response) => {
 
         const image = data?.data?.[0]?.b64_json;
         if (!image) {
-            console.log('NanoGPT returned invalid data.');
+            logError('NanoGPT returned invalid data.');
             return response.sendStatus(500);
         }
 
         return response.send({ image });
     }
     catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });
@@ -1121,7 +1121,7 @@ bfl.post('/generate', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.BFL);
 
         if (!key) {
-            console.log('BFL key not found.');
+            logError('BFL key not found.');
             return response.sendStatus(400);
         }
 
@@ -1173,7 +1173,7 @@ bfl.post('/generate', jsonParser, async (request, response) => {
             delete requestBody.guidance;
         }
 
-        console.log('BFL request:', requestBody);
+        logDebug('BFL request:', requestBody);
 
         const result = await fetch(`https://api.bfl.ml/v1/${request.body.model}`, {
             method: 'POST',
@@ -1185,7 +1185,7 @@ bfl.post('/generate', jsonParser, async (request, response) => {
         });
 
         if (!result.ok) {
-            console.log('BFL returned an error.');
+            logError('BFL returned an error.');
             return response.sendStatus(500);
         }
 
@@ -1201,7 +1201,7 @@ bfl.post('/generate', jsonParser, async (request, response) => {
 
             if (!statusResult.ok) {
                 const text = await statusResult.text();
-                console.log('BFL returned an error.', text);
+                logError('BFL returned an error.', text);
                 return response.sendStatus(500);
             }
 
@@ -1223,7 +1223,7 @@ bfl.post('/generate', jsonParser, async (request, response) => {
             throw new Error('BFL failed to generate image.', { cause: statusData });
         }
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.sendStatus(500);
     }
 });

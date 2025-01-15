@@ -9,7 +9,7 @@ import jimp from 'jimp';
 import { sync as writeFileAtomicSync } from 'write-file-atomic';
 
 import { getAllUserHandles, getUserDirectories } from '../users.js';
-import { getConfigValue } from '../util.js';
+import { getConfigValue, logError, logInfo, logWarn } from '../util.js';
 import { jsonParser } from '../express-common.js';
 
 const thumbnailsEnabled = !!getConfigValue('thumbnails.enabled', true);
@@ -104,7 +104,7 @@ async function generateThumbnail(directories, type, file) {
         const cachedStat = fs.statSync(pathToCachedFile);
 
         if (originalStat.mtimeMs > cachedStat.ctimeMs) {
-            //console.log('Original file changed. Regenerating thumbnail...');
+            //logInfo('Original file changed. Regenerating thumbnail...');
             shouldRegenerate = true;
         }
     }
@@ -129,7 +129,7 @@ async function generateThumbnail(directories, type, file) {
             buffer = await image.cover(width, height).quality(quality).getBufferAsync(imgType);
         }
         catch (inner) {
-            console.warn(`Thumbnailer can not process the image: ${pathToOriginalFile}. Using original size`);
+            logWarn(`Thumbnailer can not process the image: ${pathToOriginalFile}. Using original size`);
             buffer = fs.readFileSync(pathToOriginalFile);
         }
 
@@ -157,7 +157,7 @@ export async function ensureThumbnailCache() {
             return;
         }
 
-        console.log('Generating thumbnails cache. Please wait...');
+        logInfo('Generating thumbnails cache. Please wait...');
 
         const bgFiles = fs.readdirSync(directories.backgrounds);
         const tasks = [];
@@ -167,7 +167,7 @@ export async function ensureThumbnailCache() {
         }
 
         await Promise.all(tasks);
-        console.log(`Done! Generated: ${bgFiles.length} preview images`);
+        logInfo(`Done! Generated: ${bgFiles.length} preview images`);
     }
 }
 
@@ -192,7 +192,7 @@ router.get('/', jsonParser, async function (request, response) {
         }
 
         if (sanitize(file) !== file) {
-            console.error('Malicious filename prevented');
+            logError('Malicious filename prevented');
             return response.sendStatus(403);
         }
 
@@ -228,7 +228,7 @@ router.get('/', jsonParser, async function (request, response) {
         response.setHeader('Content-Type', contentType);
         return response.send(cachedFile);
     } catch (error) {
-        console.error('Failed getting thumbnail', error);
+        logError('Failed getting thumbnail', error);
         return response.sendStatus(500);
     }
 });

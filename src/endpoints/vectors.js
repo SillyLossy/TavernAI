@@ -6,7 +6,7 @@ import express from 'express';
 import sanitize from 'sanitize-filename';
 
 import { jsonParser } from '../express-common.js';
-import { getConfigValue } from '../util.js';
+import { getConfigValue, logError, logInfo, logWarn } from '../util.js';
 
 import { getNomicAIBatchVector, getNomicAIVector } from '../vectors/nomicai-vectors.js';
 import { getOpenAIVector, getOpenAIBatchVector } from '../vectors/openai-vectors.js';
@@ -360,14 +360,14 @@ async function regenerateCorruptedIndexErrorHandler(req, res, error) {
 
             if (exists) {
                 const path = index.folderPath;
-                console.error(`Corrupted index detected at ${path}, regenerating...`);
+                logWarn(`Corrupted index detected at ${path}, regenerating...`);
                 await index.deleteIndex();
                 return res.redirect(307, req.originalUrl + '?regenerated=true');
             }
         }
     }
 
-    console.error(error);
+    logError(error);
     return res.sendStatus(500);
 }
 
@@ -474,12 +474,12 @@ router.post('/purge-all', jsonParser, async (req, res) => {
                 continue;
             }
             await fs.promises.rm(sourcePath, { recursive: true });
-            console.log(`Deleted vector source store at ${sourcePath}`);
+            logInfo(`Deleted vector source store at ${sourcePath}`);
         }
 
         return res.sendStatus(200);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return res.sendStatus(500);
     }
 });
@@ -498,12 +498,12 @@ router.post('/purge', jsonParser, async (req, res) => {
                 continue;
             }
             await fs.promises.rm(sourcePath, { recursive: true });
-            console.log(`Deleted vector index at ${sourcePath}`);
+            logInfo(`Deleted vector index at ${sourcePath}`);
         }
 
         return res.sendStatus(200);
     } catch (error) {
-        console.error(error);
+        logError(error);
         return res.sendStatus(500);
     }
 });

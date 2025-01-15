@@ -14,7 +14,7 @@ import jimp from 'jimp';
 
 import { AVATAR_WIDTH, AVATAR_HEIGHT } from '../constants.js';
 import { jsonParser, urlencodedParser } from '../express-common.js';
-import { deepMerge, humanizedISO8601DateTime, tryParse, extractFileFromZipBuffer, MemoryLimitedMap, getConfigValue } from '../util.js';
+import { deepMerge, humanizedISO8601DateTime, tryParse, extractFileFromZipBuffer, MemoryLimitedMap, getConfigValue, logDebug, logError, logWarn, logInfo } from '../util.js';
 import { TavernCardValidator } from '../validator/TavernCardValidator.js';
 import { parse, write } from '../character-card-parser.js';
 import { readWorldInfoFile } from './worldinfo.js';
@@ -90,7 +90,7 @@ async function writeCharacterData(inputFile, data, outputFile, request, crop = u
         writeFileAtomicSync(outputImagePath, outputImage);
         return true;
     } catch (err) {
-        console.log(err);
+        logError(err);
         return false;
     }
 }
@@ -159,7 +159,7 @@ async function tryReadImage(imgPath, crop) {
     }
     // If it's an unsupported type of image (APNG) - just read the file as buffer
     catch (error) {
-        console.log(`Failed to read image: ${imgPath}`, error);
+        logWarn(`Failed to read image: ${imgPath}`, error);
         return fs.readFileSync(imgPath);
     }
 }
@@ -222,12 +222,12 @@ const processCharacter = async (item, directories) => {
         return character;
     }
     catch (err) {
-        console.log(`Could not process character: ${item}`);
+        logError(`Could not process character: ${item}`);
 
         if (err instanceof SyntaxError) {
-            console.log(`${item} does not contain a valid JSON object.`);
+            logError(`${item} does not contain a valid JSON object.`);
         } else {
-            console.log('An unexpected error occurred: ', err);
+            logError('An unexpected error occurred: ', err);
         }
 
         return {
@@ -298,7 +298,7 @@ function unsetFavFlag(char) {
 
 function readFromV2(char) {
     if (_.isUndefined(char.data)) {
-        console.warn(`Char ${char['name']} has Spec v2 data missing`);
+        logWarn(`Char ${char['name']} has Spec v2 data missing`);
         return char;
     }
 
@@ -315,7 +315,7 @@ function readFromV2(char) {
     };
 
     _.forEach(fieldMappings, (v2Path, charField) => {
-        //console.log(`Migrating field: ${charField} from ${v2Path}`);
+        //logDebug(`Migrating field: ${charField} from ${v2Path}`);
         const v2Value = _.get(char.data, v2Path);
         if (_.isUndefined(v2Value)) {
             let defaultValue = undefined;
@@ -330,15 +330,15 @@ function readFromV2(char) {
             }
 
             if (!_.isUndefined(defaultValue)) {
-                //console.debug(`Spec v2 extension data missing for field: ${charField}, using default value: ${defaultValue}`);
+                //logDebug(`Spec v2 extension data missing for field: ${charField}, using default value: ${defaultValue}`);
                 char[charField] = defaultValue;
             } else {
-                console.debug(`Char ${char['name']} has Spec v2 data missing for unknown field: ${charField}`);
+                logWarn(`Char ${char['name']} has Spec v2 data missing for unknown field: ${charField}`);
                 return;
             }
         }
         if (!_.isUndefined(char[charField]) && !_.isUndefined(v2Value) && String(char[charField]) !== String(v2Value)) {
-            console.debug(`Char ${char['name']} has Spec v2 data mismatch with Spec v1 for field: ${charField}`, char[charField], v2Value);
+            logWarn(`Char ${char['name']} has Spec v2 data mismatch with Spec v1 for field: ${charField}`, char[charField], v2Value);
         }
         char[charField] = v2Value;
     });
@@ -435,7 +435,7 @@ function charaFormatData(data, directories) {
             }
 
         } catch {
-            console.debug(`Failed to read world info file: ${data.world}. Character book will not be available.`);
+            logWarn(`Failed to read world info file: ${data.world}. Character book will not be available.`);
         }
     }
 
@@ -445,7 +445,7 @@ function charaFormatData(data, directories) {
             // Deep merge the extensions object
             _.set(char, 'data.extensions', deepMerge(char.data.extensions, extensions));
         } catch {
-            console.debug(`Failed to parse extensions JSON: ${data.extensions}`);
+            logWarn(`Failed to parse extensions JSON: ${data.extensions}`);
         }
     }
 
@@ -519,7 +519,7 @@ async function importFromYaml(uploadPath, context, preservedFileName) {
     const fileText = fs.readFileSync(uploadPath, 'utf8');
     fs.rmSync(uploadPath);
     const yamlData = yaml.parse(fileText);
-    console.log('Importing from YAML');
+    logInfo('Importing from YAML');
     yamlData.name = sanitize(yamlData.name);
     const fileName = preservedFileName || getPngName(yamlData.name, context.request.user.directories);
     let char = convertToV2({
@@ -552,7 +552,7 @@ async function importFromYaml(uploadPath, context, preservedFileName) {
 async function importFromCharX(uploadPath, { request }, preservedFileName) {
     const data = fs.readFileSync(uploadPath).buffer;
     fs.rmSync(uploadPath);
-    console.log('Importing from CharX');
+    logInfo('Importing from CharX');
     const cardBuffer = await extractFileFromZipBuffer(data, 'card.json');
 
     if (!cardBuffer) {
@@ -601,7 +601,7 @@ async function importFromJson(uploadPath, { request }, preservedFileName) {
     let jsonData = JSON.parse(data);
 
     if (jsonData.spec !== undefined) {
-        console.log(`Importing from ${jsonData.spec} json`);
+        logInfo(`Importing from ${jsonData.spec} json`);
         importRisuSprites(request.user.directories, jsonData);
         unsetFavFlag(jsonData);
         jsonData = readFromV2(jsonData);
@@ -611,7 +611,7 @@ async function importFromJson(uploadPath, { request }, preservedFileName) {
         const result = await writeCharacterData(defaultAvatarPath, char, pngName, request);
         return result ? pngName : '';
     } else if (jsonData.name !== undefined) {
-        console.log('Importing from v1 json');
+        logInfo('Importing from v1 json');
         jsonData.name = sanitize(jsonData.name);
         if (jsonData.creator_notes) {
             jsonData.creator_notes = jsonData.creator_notes.replace('Creator\'s notes go here.', '');
@@ -637,7 +637,7 @@ async function importFromJson(uploadPath, { request }, preservedFileName) {
         const result = await writeCharacterData(defaultAvatarPath, charJSON, pngName, request);
         return result ? pngName : '';
     } else if (jsonData.char_name !== undefined) {//json Pygmalion notepad
-        console.log('Importing from gradio json');
+        logInfo('Importing from gradio json');
         jsonData.char_name = sanitize(jsonData.char_name);
         if (jsonData.creator_notes) {
             jsonData.creator_notes = jsonData.creator_notes.replace('Creator\'s notes go here.', '');
@@ -684,7 +684,7 @@ async function importFromPng(uploadPath, { request }, preservedFileName) {
     const pngName = preservedFileName || getPngName(jsonData.name, request.user.directories);
 
     if (jsonData.spec !== undefined) {
-        console.log(`Found a ${jsonData.spec} character file.`);
+        logInfo(`Found a ${jsonData.spec} character file.`);
         importRisuSprites(request.user.directories, jsonData);
         unsetFavFlag(jsonData);
         jsonData = readFromV2(jsonData);
@@ -694,7 +694,7 @@ async function importFromPng(uploadPath, { request }, preservedFileName) {
         fs.unlinkSync(uploadPath);
         return result ? pngName : '';
     } else if (jsonData.name !== undefined) {
-        console.log('Found a v1 character file.');
+        logInfo('Found a v1 character file.');
 
         if (jsonData.creator_notes) {
             jsonData.creator_notes = jsonData.creator_notes.replace('Creator\'s notes go here.', '');
@@ -751,7 +751,7 @@ router.post('/create', urlencodedParser, async function (request, response) {
             return response.send(avatarName);
         }
     } catch (err) {
-        console.error(err);
+        logError(err);
         response.sendStatus(500);
     }
 });
@@ -798,20 +798,20 @@ router.post('/rename', jsonParser, async function (request, response) {
         return response.send({ avatar: newAvatarName });
     }
     catch (err) {
-        console.error(err);
+        logError(err);
         return response.sendStatus(500);
     }
 });
 
 router.post('/edit', urlencodedParser, async function (request, response) {
     if (!request.body) {
-        console.error('Error: no response body detected');
+        logError('Error: no response body detected');
         response.status(400).send('Error: no response body detected');
         return;
     }
 
     if (request.body.ch_name === '' || request.body.ch_name === undefined || request.body.ch_name === '.') {
-        console.error('Error: invalid name.');
+        logError('Error: invalid name.');
         response.status(400).send('Error: invalid name.');
         return;
     }
@@ -837,7 +837,7 @@ router.post('/edit', urlencodedParser, async function (request, response) {
         return response.sendStatus(200);
     }
     catch {
-        console.error('An error occured, character edit invalidated.');
+        logError('An error occured, character edit invalidated.');
     }
 });
 
@@ -853,14 +853,15 @@ router.post('/edit', urlencodedParser, async function (request, response) {
  * @returns {void}
  */
 router.post('/edit-attribute', jsonParser, async function (request, response) {
-    console.log(request.body);
+    logDebug(request.body);
+
     if (!request.body) {
-        console.error('Error: no response body detected');
+        logError('Error: no response body detected');
         return response.status(400).send('Error: no response body detected');
     }
 
     if (request.body.ch_name === '' || request.body.ch_name === undefined || request.body.ch_name === '.') {
-        console.error('Error: invalid name.');
+        logError('Error: invalid name.');
         return response.status(400).send('Error: invalid name.');
     }
 
@@ -872,7 +873,7 @@ router.post('/edit-attribute', jsonParser, async function (request, response) {
         const char = JSON.parse(charJSON);
         //check if the field exists
         if (char[request.body.field] === undefined && char.data[request.body.field] === undefined) {
-            console.error('Error: invalid field.');
+            logError('Error: invalid field.');
             response.status(400).send('Error: invalid field.');
             return;
         }
@@ -883,7 +884,7 @@ router.post('/edit-attribute', jsonParser, async function (request, response) {
         await writeCharacterData(avatarPath, newCharJSON, targetFile, request);
         return response.sendStatus(200);
     } catch (err) {
-        console.error('An error occured, character edit invalidated.', err);
+        logError('An error occured, character edit invalidated.', err);
     }
 });
 
@@ -906,7 +907,7 @@ router.post('/merge-attributes', jsonParser, async function (request, response) 
         const pngStringData = await readCharacterData(avatarPath);
 
         if (!pngStringData) {
-            console.error('Error: invalid character file.');
+            logError('Error: invalid character file.');
             return response.status(400).send('Error: invalid character file.');
         }
 
@@ -921,7 +922,7 @@ router.post('/merge-attributes', jsonParser, async function (request, response) 
             await writeCharacterData(avatarPath, JSON.stringify(character), targetImg, request);
             response.sendStatus(200);
         } else {
-            console.log(validator.lastValidationError);
+            logError(validator.lastValidationError);
             response.status(400).send({ message: `Validation failed for ${character.name}`, error: validator.lastValidationError });
         }
     } catch (exception) {
@@ -935,7 +936,7 @@ router.post('/delete', jsonParser, async function (request, response) {
     }
 
     if (request.body.avatar_url !== sanitize(request.body.avatar_url)) {
-        console.error('Malicious filename prevented');
+        logError('Malicious filename prevented');
         return response.sendStatus(403);
     }
 
@@ -949,7 +950,7 @@ router.post('/delete', jsonParser, async function (request, response) {
     let dir_name = (request.body.avatar_url.replace('.png', ''));
 
     if (!dir_name.length) {
-        console.error('Malicious dirname prevented');
+        logError('Malicious dirname prevented');
         return response.sendStatus(403);
     }
 
@@ -957,7 +958,7 @@ router.post('/delete', jsonParser, async function (request, response) {
         try {
             await fs.promises.rm(path.join(request.user.directories.chats, sanitize(dir_name)), { recursive: true, force: true });
         } catch (err) {
-            console.error(err);
+            logError(err);
             return response.sendStatus(500);
         }
     }
@@ -987,7 +988,7 @@ router.post('/all', jsonParser, async function (request, response) {
         const data = (await Promise.all(processingPromises)).filter(c => c.name);
         return response.send(data);
     } catch (err) {
-        console.error(err);
+        logError(err);
         response.sendStatus(500);
     }
 });
@@ -1006,7 +1007,7 @@ router.post('/get', jsonParser, async function (request, response) {
 
         return response.send(data);
     } catch (err) {
-        console.error(err);
+        logError(err);
         response.sendStatus(500);
     }
 });
@@ -1043,7 +1044,7 @@ router.post('/chats', jsonParser, async function (request, response) {
                 const fileSizeInKB = `${(stats.size / 1024).toFixed(2)}kb`;
 
                 if (stats.size === 0) {
-                    console.log(`Found an empty chat file: ${pathToFile}`);
+                    logWarn(`Found an empty chat file: ${pathToFile}`);
                     res({});
                     return;
                 }
@@ -1075,7 +1076,7 @@ router.post('/chats', jsonParser, async function (request, response) {
 
                             res(chatData);
                         } else {
-                            console.log('Found an invalid or corrupted chat file:', pathToFile);
+                            logWarn('Found an invalid or corrupted chat file:', pathToFile);
                             res({});
                         }
                     }
@@ -1088,7 +1089,7 @@ router.post('/chats', jsonParser, async function (request, response) {
 
         return response.send(validFiles);
     } catch (error) {
-        console.log(error);
+        logError(error);
         return response.send({ error: true });
     }
 });
@@ -1145,7 +1146,7 @@ router.post('/import', urlencodedParser, async function (request, response) {
         const fileName = await importFunction(uploadPath, { request, response }, preservedFileName);
 
         if (!fileName) {
-            console.error('Failed to import character');
+            logError('Failed to import character');
             return response.sendStatus(400);
         }
 
@@ -1155,7 +1156,7 @@ router.post('/import', urlencodedParser, async function (request, response) {
 
         response.send({ file_name: fileName });
     } catch (err) {
-        console.log(err);
+        logError(err);
         response.send({ error: true });
     }
 });
@@ -1163,14 +1164,13 @@ router.post('/import', urlencodedParser, async function (request, response) {
 router.post('/duplicate', jsonParser, async function (request, response) {
     try {
         if (!request.body.avatar_url) {
-            console.log('avatar URL not found in request body');
-            console.log(request.body);
+            logError('avatar URL not found in request body');
+            logDebug(request.body);
             return response.sendStatus(400);
         }
         let filename = path.join(request.user.directories.characters, sanitize(request.body.avatar_url));
         if (!fs.existsSync(filename)) {
-            console.log('file for dupe not found');
-            console.log(filename);
+            logError(`file '${filename}' for dupe not found`);
             return response.sendStatus(404);
         }
         let suffix = 1;
@@ -1198,11 +1198,11 @@ router.post('/duplicate', jsonParser, async function (request, response) {
         }
 
         fs.copyFileSync(filename, newFilename);
-        console.log(`${filename} was copied to ${newFilename}`);
+        logInfo(`${filename} was copied to ${newFilename}`);
         response.send({ path: path.parse(newFilename).base });
     }
     catch (error) {
-        console.error(error);
+        logError(error);
         return response.send({ error: true });
     }
 });
@@ -1242,7 +1242,7 @@ router.post('/export', jsonParser, async function (request, response) {
 
         return response.sendStatus(400);
     } catch (err) {
-        console.error('Character export failed', err);
+        logError('Character export failed', err);
         response.sendStatus(500);
     }
 });
