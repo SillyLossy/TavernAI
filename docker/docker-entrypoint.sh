@@ -6,4 +6,4 @@ if [ ! -e "config/config.yaml" ]; then
 fi
 
 # Start the server
-exec node server.js --listen "$@" --whitelist false
+exec node server.js --listen "$@"
