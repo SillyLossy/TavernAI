@@ -1,0 +1,70 @@
+name: Build and Deploy For Feature
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: Test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ vars.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Extract TAG & IMAGE_NAME from tag
+        id: extract
+        run: |
+          echo ${{ github.ref }}
+          echo ${{ github.repository }}
+          echo ${{ github.ref_name }}
+          tag=${{ github.sha }}
+          image=$(echo ${{ github.repository }} | sed 's/AhaAITeam\///')
+          echo "IMAGE_NAME=$image" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: '**/node_modules'
+          # 应该用package-lock文件
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+      - name: Build Docker image
+        run: |
+          echo "IMAGE_NAME: $IMAGE_NAME"
+          docker build -t $IMAGE_NAME .
+
+      - name: Login to AWS ECR
+        run: aws ecr get-login-password --region ${{ vars.AWS_REGION }} | docker login --username AWS --password-stdin ${{ vars.AWS_ECR_HOST }}
+
+      - name: Tag and push Docker image to ECR
+        run: |
+          echo "IMAGE_NAME: $IMAGE_NAME"
+          echo "TAG: $TAG"
+          docker tag $IMAGE_NAME:latest ${{ vars.AWS_ECR_HOST }}/$IMAGE_NAME:$TAG && docker push ${{ vars.AWS_ECR_HOST }}/$IMAGE_NAME:$TAG
+
+      - name: Deploy to EKS
+        run: |
+          DEPLOY_FILE=deploy/deployment.yml
+
+          echo "DEPLOY_FILE_PATH: $DEPLOY_FILE"
+
+          aws eks --region ${{ vars.AWS_REGION }} update-kubeconfig --name ${{ vars.AWS_TEST_CLUSTER }}
+          sed -i "s/NAMESPACE/${{ vars.AWS_TEST_NAMESPACE }}/g" $DEPLOY_FILE
+          sed -i "s/IMAGE_NAME/$IMAGE_NAME/g" $DEPLOY_FILE
+          sed -i "s/TAG/$TAG/g" $DEPLOY_FILE
+          sed -i "s/AWS_ECR_HOST/${{ vars.AWS_ECR_HOST }}/g" $DEPLOY_FILE
+          sed -i "s/DOMAIN/${{ vars.DOMAIN }}/g" $DEPLOY_FILE
+          # sed -i "s|AWS_ACM_ID|${{ vars.AWS_TEST_ACM_ID }}|g" $DEPLOY_FILE
+
+          kubectl apply -f $DEPLOY_FILE

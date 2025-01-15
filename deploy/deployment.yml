@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: NAMESPACE
+  name: IMAGE_NAME
+spec:
+  minReadySeconds: 5
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 10%
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: IMAGE_NAME
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: IMAGE_NAME
+    spec:
+      containers:
+      - image: AWS_ECR_HOST/IMAGE_NAME:TAG
+        imagePullPolicy: Always
+        name: IMAGE_NAME
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /check/health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /check/health
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+          - name: PORT
+            value: '80'
+        envFrom:
+          - configMapRef:
+              name: aha-base
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: NAMESPACE
+  name: service-IMAGE_NAME
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: IMAGE_NAME
