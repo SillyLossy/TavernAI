@@ -9,7 +9,7 @@ import fetch from 'node-fetch';
 
 import { UNSAFE_EXTENSIONS } from '../constants.js';
 import { jsonParser } from '../express-common.js';
-import { clientRelativePath, logDebug, logError } from '../util.js';
+import { clientRelativePath, logDebug, logError, logInfo } from '../util.js';
 
 const VALID_CATEGORIES = ['bgm', 'ambient', 'blip', 'live2d', 'vrm', 'character', 'temp'];
 
@@ -200,7 +200,7 @@ router.post('/download', jsonParser, async (request, response) => {
             category = i;
 
     if (category === null) {
-        logDebug('Bad request: unsupported asset category.');
+        logError('Bad request: unsupported asset category.');
         return response.sendStatus(400);
     }
 
@@ -212,7 +212,7 @@ router.post('/download', jsonParser, async (request, response) => {
 
     const temp_path = path.join(request.user.directories.assets, 'temp', request.body.filename);
     const file_path = path.join(request.user.directories.assets, category, request.body.filename);
-    logDebug('Request received to download', url, 'to', file_path);
+    logInfo('Request received to download', url, 'to', file_path);
 
     try {
         // Download to temp
@@ -241,7 +241,7 @@ router.post('/download', jsonParser, async (request, response) => {
         }
 
         // Move into asset place
-        logDebug('Download finished, moving file from', temp_path, 'to', file_path);
+        logInfo('Download finished, moving file from', temp_path, 'to', file_path);
         fs.copyFileSync(temp_path, file_path);
         fs.rmSync(temp_path);
         response.sendStatus(200);
@@ -270,7 +270,7 @@ router.post('/delete', jsonParser, async (request, response) => {
             category = i;
 
     if (category === null) {
-        logDebug('Bad request: unsupported asset category.');
+        logError('Bad request: unsupported asset category.');
         return response.sendStatus(400);
     }
 
@@ -280,7 +280,7 @@ router.post('/delete', jsonParser, async (request, response) => {
         return response.status(400).send(validation.message);
 
     const file_path = path.join(request.user.directories.assets, category, request.body.filename);
-    logDebug('Request received to delete', category, file_path);
+    logInfo('Request received to delete', category, file_path);
 
     try {
         // Delete if previous download failed
@@ -288,10 +288,10 @@ router.post('/delete', jsonParser, async (request, response) => {
             fs.unlink(file_path, (err) => {
                 if (err) throw err;
             });
-            logDebug('Asset deleted.');
+            logInfo('Asset deleted.');
         }
         else {
-            logDebug('Asset not found.');
+            logError('Asset not found.');
             response.sendStatus(400);
         }
         // Move into asset place
