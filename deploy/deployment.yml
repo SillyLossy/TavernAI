@@ -24,25 +24,25 @@ spec:
         imagePullPolicy: Always
         name: IMAGE_NAME
         ports:
-        - containerPort: 80
+        - containerPort: 8000
         readinessProbe:
           httpGet:
             path: /check/health
-            port: 80
+            port: 8000
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /check/health
-            port: 80
+            port: 8000
           initialDelaySeconds: 15
           periodSeconds: 20
         env:
           - name: PORT
-            value: '80'
+            value: '8000'
         envFrom:
           - configMapRef:
-              name: aha-base
+              name: st-base
 ---
 apiVersion: v1
 kind: Service
