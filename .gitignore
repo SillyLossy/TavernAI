@@ -21,6 +21,7 @@ public/stats.json
 *.jsonl
 /config.conf
 /config.yaml
+/config.yaml.bak
 /config.conf.bak
 /docker/config
 /docker/user
