@@ -27,13 +27,13 @@ spec:
         - containerPort: 8000
         readinessProbe:
           httpGet:
-            path: /
+            path: /login
             port: 8000
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /
+            path: /login
             port: 8000
           initialDelaySeconds: 15
           periodSeconds: 20
