@@ -325,7 +325,7 @@ router.post('/character', jsonParser, async (request, response) => {
             category = i;
 
     if (category === null) {
-        logDebug('Bad request: unsupported asset category.');
+        logError('Bad request: unsupported asset category.');
         return response.sendStatus(400);
     }
 
