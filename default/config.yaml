@@ -83,6 +83,8 @@ autorun: true
 # Avoids using 'localhost' for autorun in auto mode.
 # use if you don't have 'localhost' in your hosts file
 avoidLocalhost: false
+# Enable prompt logging in terminal
+enablePromptLogging: true
 
 ## BACKUP CONFIGURATION
 backups:

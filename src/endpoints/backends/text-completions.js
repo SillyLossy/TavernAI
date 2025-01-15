@@ -94,7 +94,9 @@ async function abortKoboldCppRequest(url) {
 
 //************** Ooba/OpenAI text completions API
 router.post('/status', jsonParser, async function (request, response) {
-    if (!request.body) return response.sendStatus(400);
+    if (!request.body) {
+        return response.sendStatus(400);
+    }
 
     try {
         if (request.body.api_server.indexOf('localhost') !== -1) {
@@ -123,6 +125,7 @@ router.post('/status', jsonParser, async function (request, response) {
             case TEXTGEN_TYPES.LLAMACPP:
             case TEXTGEN_TYPES.INFERMATICAI:
             case TEXTGEN_TYPES.OPENROUTER:
+            case TEXTGEN_TYPES.FEATHERLESS:
                 url += '/v1/models';
                 break;
             case TEXTGEN_TYPES.DREAMGEN:
@@ -139,9 +142,6 @@ router.post('/status', jsonParser, async function (request, response) {
                 break;
             case TEXTGEN_TYPES.OLLAMA:
                 url += '/api/tags';
-                break;
-            case TEXTGEN_TYPES.FEATHERLESS:
-                url += '/v1/models';
                 break;
             case TEXTGEN_TYPES.HUGGINGFACE:
                 url += '/info';
@@ -230,7 +230,9 @@ router.post('/status', jsonParser, async function (request, response) {
 });
 
 router.post('/props', jsonParser, async function (request, response) {
-    if (!request.body.api_server) return response.sendStatus(400);
+    if (!request.body.api_server) {
+        return response.sendStatus(400);
+    }
 
     try {
         const baseUrl = trimV1(request.body.api_server);
@@ -264,7 +266,9 @@ router.post('/props', jsonParser, async function (request, response) {
 });
 
 router.post('/generate', jsonParser, async function (request, response) {
-    if (!request.body) return response.sendStatus(400);
+    if (!request.body) {
+        return response.sendStatus(400);
+    }
 
     try {
         if (request.body.api_server.indexOf('localhost') !== -1) {
@@ -273,7 +277,15 @@ router.post('/generate', jsonParser, async function (request, response) {
 
         const apiType = request.body.api_type;
         const baseUrl = request.body.api_server;
-        console.log(request.body);
+
+        if (getConfigValue('enablePromptLogging', true)) {
+            console.log(request.body);
+        } else {
+            const requestCopy = Object.assign({}, request.body);
+            delete requestCopy.prompt;
+
+            console.log(requestCopy);
+        }
 
         const controller = new AbortController();
         request.socket.removeAllListeners('close');
@@ -327,62 +339,60 @@ router.post('/generate', jsonParser, async function (request, response) {
 
         setAdditionalHeaders(request, args, baseUrl);
 
-        if (request.body.api_type === TEXTGEN_TYPES.TOGETHERAI) {
-            request.body = _.pickBy(request.body, (_, key) => TOGETHERAI_KEYS.includes(key));
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.INFERMATICAI) {
-            request.body = _.pickBy(request.body, (_, key) => INFERMATICAI_KEYS.includes(key));
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.FEATHERLESS) {
-            request.body = _.pickBy(request.body, (_, key) => FEATHERLESS_KEYS.includes(key));
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.DREAMGEN) {
-            request.body = _.pickBy(request.body, (_, key) => DREAMGEN_KEYS.includes(key));
-            // NOTE: DreamGen sometimes get confused by the unusual formatting in the character cards.
-            request.body.stop?.push('### User', '## User');
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.GENERIC) {
-            request.body = _.pickBy(request.body, (_, key) => OPENAI_KEYS.includes(key));
-            if (Array.isArray(request.body.stop)) { request.body.stop = request.body.stop.slice(0, 4); }
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.OPENROUTER) {
-            if (Array.isArray(request.body.provider) && request.body.provider.length > 0) {
-                request.body.provider = {
-                    allow_fallbacks: request.body.allow_fallbacks ?? true,
-                    order: request.body.provider,
-                };
-            } else {
-                delete request.body.provider;
-            }
-            request.body = _.pickBy(request.body, (_, key) => OPENROUTER_KEYS.includes(key));
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.VLLM) {
-            request.body = _.pickBy(request.body, (_, key) => VLLM_KEYS.includes(key));
-            args.body = JSON.stringify(request.body);
-        }
-
-        if (request.body.api_type === TEXTGEN_TYPES.OLLAMA) {
-            const keepAlive = getConfigValue('ollama.keepAlive', -1);
-            args.body = JSON.stringify({
-                model: request.body.model,
-                prompt: request.body.prompt,
-                stream: request.body.stream ?? false,
-                keep_alive: keepAlive,
-                raw: true,
-                options: _.pickBy(request.body, (_, key) => OLLAMA_KEYS.includes(key)),
-            });
+        switch(request.body.api_type) {
+            case TEXTGEN_TYPES.TOGETHERAI:
+                request.body = _.pickBy(request.body, (_, key) => TOGETHERAI_KEYS.includes(key));
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.INFERMATICAI:
+                request.body = _.pickBy(request.body, (_, key) => INFERMATICAI_KEYS.includes(key));
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.FEATHERLESS:
+                request.body = _.pickBy(request.body, (_, key) => FEATHERLESS_KEYS.includes(key));
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.DREAMGEN:
+                request.body = _.pickBy(request.body, (_, key) => DREAMGEN_KEYS.includes(key));
+                // NOTE: DreamGen sometimes get confused by the unusual formatting in the character cards.
+                request.body.stop?.push('### User', '## User');
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.GENERIC:
+                request.body = _.pickBy(request.body, (_, key) => OPENAI_KEYS.includes(key));
+                if (Array.isArray(request.body.stop))
+                {
+                    request.body.stop = request.body.stop.slice(0, 4);
+                }
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.OPENROUTER:
+                if (Array.isArray(request.body.provider) && request.body.provider.length > 0) {
+                    request.body.provider = {
+                        allow_fallbacks: request.body.allow_fallbacks ?? true,
+                        order: request.body.provider,
+                    };
+                } else {
+                    delete request.body.provider;
+                }
+                request.body = _.pickBy(request.body, (_, key) => OPENROUTER_KEYS.includes(key));
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.VLLM:
+                request.body = _.pickBy(request.body, (_, key) => VLLM_KEYS.includes(key));
+                args.body = JSON.stringify(request.body);
+                break;
+            case TEXTGEN_TYPES.OLLAMA:
+                const keepAlive = getConfigValue('ollama.keepAlive', -1);
+                args.body = JSON.stringify({
+                    model: request.body.model,
+                    prompt: request.body.prompt,
+                    stream: request.body.stream ?? false,
+                    keep_alive: keepAlive,
+                    raw: true,
+                    options: _.pickBy(request.body, (_, key) => OLLAMA_KEYS.includes(key)),
+                });
+                break;
         }
 
         if (request.body.api_type === TEXTGEN_TYPES.OLLAMA && request.body.stream) {
@@ -436,7 +446,9 @@ const ollama = express.Router();
 
 ollama.post('/download', jsonParser, async function (request, response) {
     try {
-        if (!request.body.name || !request.body.api_server) return response.sendStatus(400);
+        if (!request.body.name || !request.body.api_server) {
+            return response.sendStatus(400);
+        }
 
         const name = request.body.name;
         const url = String(request.body.api_server).replace(/\/$/, '');

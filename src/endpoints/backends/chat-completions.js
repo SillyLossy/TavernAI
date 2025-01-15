@@ -1032,7 +1032,15 @@ router.post('/generate', jsonParser, function (request, response) {
         signal: controller.signal,
     };
 
-    console.log(requestBody);
+    if (getConfigValue('enablePromptLogging', true)) {
+        console.log(requestBody);
+    } else {
+        const requestCopy = Object.assign({}, requestBody);
+        delete requestCopy.messages;
+        delete requestCopy.prompt;
+
+        console.log(requestCopy);
+    }
 
     makeRequest(config, response, request);
 

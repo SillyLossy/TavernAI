@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import express from 'express';
 import { AIHorde, ModelGenerationInputStableSamplers, ModelInterrogationFormTypes, HordeAsyncRequestStates } from '@zeldafan0225/ai_horde';
-import { getVersion, delay, Cache } from '../util.js';
+import { getVersion, delay, Cache, getConfigValue } from '../util.js';
 import { readSecret, SECRET_KEYS } from './secrets.js';
 import { jsonParser } from '../express-common.js';
 
@@ -187,7 +187,15 @@ router.post('/generate-text', jsonParser, async (request, response) => {
     const url = 'https://aihorde.net/api/v2/generate/text/async';
     const agent = await getClientAgent();
 
-    console.log(request.body);
+    if (getConfigValue('enablePromptLogging', true)) {
+        console.log(request.body);
+    } else {
+        const requestCopy = Object.assign({}, request.body);
+        delete requestCopy.prompt;
+
+        console.log(requestCopy);
+    }
+
     try {
         const result = await fetch(url, {
             method: 'POST',
@@ -331,7 +339,16 @@ router.post('/generate-image', jsonParser, async (request, response) => {
         }
 
         const api_key_horde = readSecret(request.user.directories, SECRET_KEYS.HORDE) || ANONYMOUS_KEY;
-        console.log('Stable Horde request:', request.body);
+
+        if (getConfigValue('enablePromptLogging', true)) {
+            console.log('Stable Horde request:', request.body);
+        } else {
+            const requestCopy = Object.assign({}, request.body);
+            delete requestCopy.body.prompt;
+            delete requestCopy.body.negative_prompt
+
+            console.log('Stable Horde request:', requestCopy);
+        }
 
         const ai_horde = await getHordeClient();
         // noinspection JSCheckFunctionSignatures -- see @ts-ignore - use_gfpgan

@@ -5,7 +5,7 @@ import fetch from 'node-fetch';
 import express from 'express';
 
 import { readSecret, SECRET_KEYS } from './secrets.js';
-import { readAllChunks, extractFileFromZipBuffer, forwardFetchResponse } from '../util.js';
+import { readAllChunks, extractFileFromZipBuffer, forwardFetchResponse, getConfigValue } from '../util.js';
 import { jsonParser } from '../express-common.js';
 
 const API_NOVELAI = 'https://api.novelai.net';
@@ -297,7 +297,16 @@ router.post('/generate-image', jsonParser, async (request, response) => {
     }
 
     try {
-        console.log('NAI Diffusion request:', request.body);
+        if (getConfigValue('enablePromptLogging', true)) {
+            console.log('NAI Diffusion request:', request.body);
+        } else {
+            const requestCopy = Object.assign({}, request.body);
+            delete requestCopy.prompt;
+            delete requestCopy.negative_prompt;
+
+            console.log('NAI Diffusion request:', requestCopy);
+        }
+
         const generateUrl = `${IMAGE_NOVELAI}/ai/generate-image`;
         const generateResult = await fetch(generateUrl, {
             method: 'POST',
