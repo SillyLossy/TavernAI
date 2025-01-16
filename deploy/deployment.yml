@@ -29,14 +29,14 @@ spec:
           httpGet:
             path: /login
             port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 30
+          initialDelaySeconds: 600
+          periodSeconds: 300
         livenessProbe:
           httpGet:
             path: /login
             port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 30
+          initialDelaySeconds: 600
+          periodSeconds: 300
         env:
           - name: PORT
             value: '8000'
