@@ -4,7 +4,7 @@ FROM node:lts-alpine3.19
 ARG APP_HOME=/home/node/app
 
 # Install system dependencies
-RUN apk add gcompat tini git curl wget netstat
+RUN apk add gcompat tini git curl wget net-tools
 
 # Create app directory
 WORKDIR ${APP_HOME}
