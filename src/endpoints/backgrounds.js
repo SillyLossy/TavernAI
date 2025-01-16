@@ -7,10 +7,11 @@ import sanitize from 'sanitize-filename';
 import { jsonParser, urlencodedParser } from '../express-common.js';
 import { invalidateThumbnail } from './thumbnails.js';
 import { getImages } from '../util.js';
+import { getFileNameValidationFunction } from '../middleware/validateFileName.js';
 
 export const router = express.Router();
 
-router.post('/all', jsonParser, function (request, response) {
+router.post('/all', jsonParser, getFileNameValidationFunction('bg'), function (request, response) {
     var images = getImages(request.user.directories.backgrounds);
     response.send(JSON.stringify(images));
 });

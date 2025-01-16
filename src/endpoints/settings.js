@@ -9,6 +9,7 @@ import { SETTINGS_FILE } from '../constants.js';
 import { getConfigValue, generateTimestamp, removeOldBackups } from '../util.js';
 import { jsonParser } from '../express-common.js';
 import { getAllUserHandles, getUserDirectories } from '../users.js';
+import { getFileNameValidationFunction } from '../middleware/validateFileName.js';
 
 const ENABLE_EXTENSIONS = getConfigValue('enableExtensions', true);
 const ENABLE_EXTENSIONS_AUTO_UPDATE = getConfigValue('enableExtensionsAutoUpdate', true);
@@ -296,7 +297,7 @@ router.post('/get-snapshots', jsonParser, async (request, response) => {
     }
 });
 
-router.post('/load-snapshot', jsonParser, async (request, response) => {
+router.post('/load-snapshot', jsonParser, getFileNameValidationFunction('name'), async (request, response) => {
     try {
         const userFilesPattern = getFilePrefix(request.user.profile.handle);
 
@@ -330,7 +331,7 @@ router.post('/make-snapshot', jsonParser, async (request, response) => {
     }
 });
 
-router.post('/restore-snapshot', jsonParser, async (request, response) => {
+router.post('/restore-snapshot', jsonParser, getFileNameValidationFunction('name'), async (request, response) => {
     try {
         const userFilesPattern = getFilePrefix(request.user.profile.handle);
 

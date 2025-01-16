@@ -14,6 +14,7 @@ import jimp from 'jimp';
 
 import { AVATAR_WIDTH, AVATAR_HEIGHT } from '../constants.js';
 import { jsonParser, urlencodedParser } from '../express-common.js';
+import { default as validateAvatarUrlMiddleware, getFileNameValidationFunction } from '../middleware/validateFileName.js';
 import { deepMerge, humanizedISO8601DateTime, tryParse, extractFileFromZipBuffer, MemoryLimitedMap, getConfigValue } from '../util.js';
 import { TavernCardValidator } from '../validator/TavernCardValidator.js';
 import { parse, write } from '../character-card-parser.js';
@@ -756,7 +757,7 @@ router.post('/create', urlencodedParser, async function (request, response) {
     }
 });
 
-router.post('/rename', jsonParser, async function (request, response) {
+router.post('/rename', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     if (!request.body.avatar_url || !request.body.new_name) {
         return response.sendStatus(400);
     }
@@ -803,7 +804,7 @@ router.post('/rename', jsonParser, async function (request, response) {
     }
 });
 
-router.post('/edit', urlencodedParser, async function (request, response) {
+router.post('/edit', urlencodedParser, validateAvatarUrlMiddleware, async function (request, response) {
     if (!request.body) {
         console.error('Error: no response body detected');
         response.status(400).send('Error: no response body detected');
@@ -852,7 +853,7 @@ router.post('/edit', urlencodedParser, async function (request, response) {
  * @param {Object} response - The HTTP response object.
  * @returns {void}
  */
-router.post('/edit-attribute', jsonParser, async function (request, response) {
+router.post('/edit-attribute', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     console.log(request.body);
     if (!request.body) {
         console.error('Error: no response body detected');
@@ -898,7 +899,7 @@ router.post('/edit-attribute', jsonParser, async function (request, response) {
  *
  * @returns {void}
  * */
-router.post('/merge-attributes', jsonParser, async function (request, response) {
+router.post('/merge-attributes', jsonParser, getFileNameValidationFunction('avatar'), async function (request, response) {
     try {
         const update = request.body;
         const avatarPath = path.join(request.user.directories.characters, update.avatar);
@@ -929,7 +930,7 @@ router.post('/merge-attributes', jsonParser, async function (request, response) 
     }
 });
 
-router.post('/delete', jsonParser, async function (request, response) {
+router.post('/delete', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     if (!request.body || !request.body.avatar_url) {
         return response.sendStatus(400);
     }
@@ -992,7 +993,7 @@ router.post('/all', jsonParser, async function (request, response) {
     }
 });
 
-router.post('/get', jsonParser, async function (request, response) {
+router.post('/get', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     try {
         if (!request.body) return response.sendStatus(400);
         const item = request.body.avatar_url;
@@ -1011,7 +1012,7 @@ router.post('/get', jsonParser, async function (request, response) {
     }
 });
 
-router.post('/chats', jsonParser, async function (request, response) {
+router.post('/chats', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     if (!request.body) return response.sendStatus(400);
 
     const characterDirectory = (request.body.avatar_url).replace('.png', '');
@@ -1160,7 +1161,7 @@ router.post('/import', urlencodedParser, async function (request, response) {
     }
 });
 
-router.post('/duplicate', jsonParser, async function (request, response) {
+router.post('/duplicate', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     try {
         if (!request.body.avatar_url) {
             console.log('avatar URL not found in request body');
@@ -1207,7 +1208,7 @@ router.post('/duplicate', jsonParser, async function (request, response) {
     }
 });
 
-router.post('/export', jsonParser, async function (request, response) {
+router.post('/export', jsonParser, validateAvatarUrlMiddleware, async function (request, response) {
     try {
         if (!request.body.format || !request.body.avatar_url) {
             return response.sendStatus(400);
