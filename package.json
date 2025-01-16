@@ -89,7 +89,7 @@
     "version": "1.12.10",
     "scripts": {
         "start": "node server.js",
-        "start:local": "node server.js --port 8000 --requestProxyEnabled true --whitelist false --listen true --basicAuthMode true --perUserBasicAuth true --enableUserAccounts true",
+        "start:local": "node server.js --port 8000 --requestProxyEnabled true --listen true",
         "start:deno": "deno run --allow-run --allow-net --allow-read --allow-write --allow-sys --allow-env server.js",
         "start:bun": "bun server.js",
         "start:no-csrf": "node server.js --disableCsrf",

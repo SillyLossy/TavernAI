@@ -435,6 +435,7 @@ app.get('/login', async (request, response) => {
 
     try {
         const autoLogin = await tryAutoLogin(request, basicAuthMode);
+        console.log('autoLogin', autoLogin);
 
         if (autoLogin) {
             return response.redirect('/');
