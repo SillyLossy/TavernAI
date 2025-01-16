@@ -27,16 +27,16 @@ spec:
         - containerPort: 8000
         readinessProbe:
           httpGet:
-            path: /login
+            path: /health
             port: 8000
-          initialDelaySeconds: 600
-          periodSeconds: 300
+          initialDelaySeconds: 30
+          periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /login
+            path: /health
             port: 8000
-          initialDelaySeconds: 600
-          periodSeconds: 300
+          initialDelaySeconds: 30
+          periodSeconds: 20
         env:
           - name: PORT
             value: '8000'

@@ -237,6 +237,13 @@ console.log(`Node version: ${process.version}. Running in ${process.env.NODE_ENV
 process.chdir(serverDirectory);
 
 const app = express();
+
+// 添加健康检查接口
+app.get('/health', (req, res) => {
+    console.log('health check');
+    res.status(200).json({ status: 'ok' });
+});
+
 app.use(helmet({
     contentSecurityPolicy: false,
 }));
