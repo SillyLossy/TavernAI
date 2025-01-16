@@ -79,3 +79,8 @@ spec:
               name: service-IMAGE_NAME
               port:
                 number: 80
+  defaultBackend:
+    service:
+      name: service-IMAGE_NAME
+      port:
+        number: 80
