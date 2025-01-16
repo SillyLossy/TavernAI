@@ -43,6 +43,29 @@ spec:
         envFrom:
           - configMapRef:
               name: st-base
+        volumeMounts:
+        - mountPath: /home/node/app/data
+          name: st-efs-volume-data
+        - mountPath: /home/node/app/plugins
+          name: st-efs-volume-plugins
+        - mountPath: /home/node/app/config
+          name: st-efs-volume-config
+        - mountPath: /home/node/app/public/scripts/extensions/third-party
+          name: st-efs-volume-extensions
+      volumes:
+      - name: st-efs-volume-data
+        persistentVolumeClaim:
+          claimName: st-efs-claim-data
+      - name: st-efs-volume-plugins
+        persistentVolumeClaim:
+          claimName: st-efs-claim-plugins
+      - name: st-efs-volume-config
+        persistentVolumeClaim:
+          claimName: st-efs-claim-config
+      - name: st-efs-volume-extensions
+        persistentVolumeClaim:
+          claimName: st-efs-claim-extensions
+
 ---
 apiVersion: v1
 kind: Service

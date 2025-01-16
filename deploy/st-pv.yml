@@ -1,0 +1,100 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc-data
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0c3d3994aef06d453  # 替换为你的 EFS 文件系统 ID
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/app/data"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc-plugins
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0c3d3994aef06d453  # 替换为你的 EFS 文件系统 ID
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/app/plugins"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc-config
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0c3d3994aef06d453  # 替换为你的 EFS 文件系统 ID
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/app/config"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc-extensions
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0c3d3994aef06d453  # 替换为你的 EFS 文件系统 ID
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/app/extensions"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: st-efs-claim-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc-data
+  resources:
+    requests:
+      storage: 35Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: st-efs-claim-plugins
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc-plugins
+  resources:
+    requests:
+      storage: 25Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: st-efs-claim-config
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc-config
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: st-efs-claim-extensions
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc-extensions
+  resources:
+    requests:
+      storage: 15Gi
