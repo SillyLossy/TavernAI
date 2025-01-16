@@ -11,12 +11,12 @@ import { getFileNameValidationFunction } from '../middleware/validateFileName.js
 
 export const router = express.Router();
 
-router.post('/all', jsonParser, getFileNameValidationFunction('bg'), function (request, response) {
+router.post('/all', jsonParser, function (request, response) {
     var images = getImages(request.user.directories.backgrounds);
     response.send(JSON.stringify(images));
 });
 
-router.post('/delete', jsonParser, function (request, response) {
+router.post('/delete', jsonParser, getFileNameValidationFunction('bg'), function (request, response) {
     if (!request.body) return response.sendStatus(400);
 
     if (request.body.bg !== sanitize(request.body.bg)) {
