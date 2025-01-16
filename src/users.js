@@ -582,7 +582,7 @@ export async function tryAutoLogin(request, basicAuthMode) {
     }
 
     if (!request.query.noauto) {
-        if (await singleUserLogin(request)) {
+        if (basicAuthMode &&await singleUserLogin(request)) {
             return true;
         }
 
