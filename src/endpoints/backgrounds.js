@@ -26,7 +26,7 @@ router.post('/delete', jsonParser, function (request, response) {
     const fileName = path.join(request.user.directories.backgrounds, sanitize(request.body.bg));
 
     if (!fs.existsSync(fileName)) {
-        console.log('BG file not found');
+        console.error('BG file not found');
         return response.sendStatus(400);
     }
 
@@ -42,12 +42,12 @@ router.post('/rename', jsonParser, function (request, response) {
     const newFileName = path.join(request.user.directories.backgrounds, sanitize(request.body.new_bg));
 
     if (!fs.existsSync(oldFileName)) {
-        console.log('BG file not found');
+        console.error('BG file not found');
         return response.sendStatus(400);
     }
 
     if (fs.existsSync(newFileName)) {
-        console.log('New BG file already exists');
+        console.error('New BG file already exists');
         return response.sendStatus(400);
     }
 

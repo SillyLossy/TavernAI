@@ -59,6 +59,7 @@ const hash_derivations = {
         // Tulu-3-8B
         // Tulu-3-70B
         'Tulu'
+    ,
 };
 
 const substr_derivations = {
@@ -87,6 +88,6 @@ export async function deriveTemplatesFromChatTemplate(chat_template, hash) {
         }
     }
 
-    console.log(`Unknown chat template hash: ${hash} for [${chat_template}]`);
+    console.warn(`Unknown chat template hash: ${hash} for [${chat_template}]`);
     return null;
 }

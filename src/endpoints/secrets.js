@@ -151,7 +151,7 @@ export function getAllSecrets(directories) {
     const filePath = path.join(directories.root, SECRETS_FILE);
 
     if (!fs.existsSync(filePath)) {
-        console.log('Secrets file does not exist');
+        console.error('Secrets file does not exist');
         return undefined;
     }
 

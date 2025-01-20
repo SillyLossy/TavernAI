@@ -13,6 +13,7 @@ import _ from 'lodash';
 import yauzl from 'yauzl';
 import mime from 'mime-types';
 import { default as simpleGit } from 'simple-git';
+import { LOG_LEVELS } from './constants.js';
 
 /**
  * Parsed config object.
@@ -149,6 +150,7 @@ export function getHexString(length) {
  */
 export function formatBytes(bytes) {
     if (bytes === 0) return '0 B';
+
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -285,10 +287,11 @@ export function deepMerge(target, source) {
     if (isObject(target) && isObject(source)) {
         Object.keys(source).forEach(key => {
             if (isObject(source[key])) {
-                if (!(key in target))
+                if (!(key in target)) {
                     Object.assign(output, { [key]: source[key] });
-                else
+                } else {
                     output[key] = deepMerge(target[key], source[key]);
+                }
             } else {
                 Object.assign(output, { [key]: source[key] });
             }
@@ -466,7 +469,9 @@ export function forwardFetchResponse(from, to) {
         from.body.pipe(to);
 
         to.socket.on('close', function () {
-            if (from.body instanceof Readable) from.body.destroy(); // Close the remote stream
+            if (from.body instanceof Readable) {
+                from.body.destroy(); // Close the remote stream
+            }
             to.end(); // End the Express response
         });
 
@@ -690,6 +695,19 @@ export function isValidUrl(url) {
     } catch (error) {
         return false;
     }
+}
+
+/**
+ * Setup the minimum log level
+ */
+export function setupLogLevel() {
+    const logLevel = getConfigValue('minLogLevel', LOG_LEVELS.DEBUG);
+
+    globalThis.console.debug = logLevel <= LOG_LEVELS.DEBUG ? console.debug : () => {};
+    globalThis.console.log = logLevel <= LOG_LEVELS.INFO ? console.log : () => {};
+    globalThis.console.info = logLevel <= LOG_LEVELS.INFO ? console.info : () => {};
+    globalThis.console.warn = logLevel <= LOG_LEVELS.WARN ? console.warn : () => {};
+    globalThis.console.error = logLevel <= LOG_LEVELS.ERROR ? console.error : () => {};
 }
 
 /**

@@ -96,25 +96,25 @@ router.post('/serpapi', jsonParser, async (request, response) => {
         const key = readSecret(request.user.directories, SECRET_KEYS.SERPAPI);
 
         if (!key) {
-            console.log('No SerpApi key found');
+            console.error('No SerpApi key found');
             return response.sendStatus(400);
         }
 
         const { query } = request.body;
         const result = await fetch(`https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=${key}`);
 
-        console.log('SerpApi query', query);
+        console.debug('SerpApi query', query);
 
         if (!result.ok) {
             const text = await result.text();
-            console.log('SerpApi request failed', result.statusText, text);
+            console.error('SerpApi request failed', result.statusText, text);
             return response.status(500).send(text);
         }
 
         const data = await result.json();
         return response.json(data);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return response.sendStatus(500);
     }
 });
@@ -130,7 +130,7 @@ router.post('/transcript', jsonParser, async (request, response) => {
         const json = request.body.json;
 
         if (!id) {
-            console.log('Id is required for /transcript');
+            console.error('Id is required for /transcript');
             return response.sendStatus(400);
         }
 
@@ -155,7 +155,7 @@ router.post('/transcript', jsonParser, async (request, response) => {
             throw error;
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return response.sendStatus(500);
     }
 });
@@ -165,17 +165,17 @@ router.post('/searxng', jsonParser, async (request, response) => {
         const { baseUrl, query, preferences } = request.body;
 
         if (!baseUrl || !query) {
-            console.log('Missing required parameters for /searxng');
+            console.error('Missing required parameters for /searxng');
             return response.sendStatus(400);
         }
 
-        console.log('SearXNG query', baseUrl, query);
+        console.debug('SearXNG query', baseUrl, query);
 
         const mainPageUrl = new URL(baseUrl);
         const mainPageRequest = await fetch(mainPageUrl, { headers: visitHeaders });
 
         if (!mainPageRequest.ok) {
-            console.log('SearXNG request failed', mainPageRequest.statusText);
+            console.error('SearXNG request failed', mainPageRequest.statusText);
             return response.sendStatus(500);
         }
 
@@ -199,14 +199,14 @@ router.post('/searxng', jsonParser, async (request, response) => {
 
         if (!searchResult.ok) {
             const text = await searchResult.text();
-            console.log('SearXNG request failed', searchResult.statusText, text);
+            console.error('SearXNG request failed', searchResult.statusText, text);
             return response.sendStatus(500);
         }
 
         const data = await searchResult.text();
         return response.send(data);
     } catch (error) {
-        console.log('SearXNG request failed', error);
+        console.error('SearXNG request failed', error);
         return response.sendStatus(500);
     }
 });
@@ -216,7 +216,7 @@ router.post('/tavily', jsonParser, async (request, response) => {
         const apiKey = readSecret(request.user.directories, SECRET_KEYS.TAVILY);
 
         if (!apiKey) {
-            console.log('No Tavily key found');
+            console.error('No Tavily key found');
             return response.sendStatus(400);
         }
 
@@ -243,18 +243,18 @@ router.post('/tavily', jsonParser, async (request, response) => {
             body: JSON.stringify(body),
         });
 
-        console.log('Tavily query', query);
+        console.debug('Tavily query', query);
 
         if (!result.ok) {
             const text = await result.text();
-            console.log('Tavily request failed', result.statusText, text);
+            console.error('Tavily request failed', result.statusText, text);
             return response.status(500).send(text);
         }
 
         const data = await result.json();
         return response.json(data);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return response.sendStatus(500);
     }
 });
@@ -299,7 +299,7 @@ router.post('/visit', jsonParser, async (request, response) => {
         const url = request.body.url;
 
         if (!url) {
-            console.log('No url provided for /visit');
+            console.error('No url provided for /visit');
             return response.sendStatus(400);
         }
 
@@ -326,29 +326,29 @@ router.post('/visit', jsonParser, async (request, response) => {
                 throw new Error('Invalid hostname');
             }
         } catch (error) {
-            console.log('Invalid url provided for /visit', url);
+            console.error('Invalid url provided for /visit', url);
             return response.sendStatus(400);
         }
 
-        console.log('Visiting web URL', url);
+        console.info('Visiting web URL', url);
 
         const result = await fetch(url, { headers: visitHeaders });
 
         if (!result.ok) {
-            console.log(`Visit failed ${result.status} ${result.statusText}`);
+            console.error(`Visit failed ${result.status} ${result.statusText}`);
             return response.sendStatus(500);
         }
 
         const contentType = String(result.headers.get('content-type'));
         if (!contentType.includes('text/html')) {
-            console.log(`Visit failed, content-type is ${contentType}, expected text/html`);
+            console.error(`Visit failed, content-type is ${contentType}, expected text/html`);
             return response.sendStatus(500);
         }
 
         const text = await result.text();
         return response.send(text);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return response.sendStatus(500);
     }
 });
