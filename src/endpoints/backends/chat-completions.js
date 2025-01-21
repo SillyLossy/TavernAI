@@ -906,6 +906,10 @@ router.post('/generate', jsonParser, function (request, response) {
         if (Number.isInteger(cachingAtDepth) && cachingAtDepth >= 0 && request.body.model?.startsWith('anthropic/claude-3')) {
             cachingAtDepthForOpenRouterClaude(request.body.messages, cachingAtDepth);
         }
+
+        if (request.body.model.includes('deepseek-r1')) {
+            request.body.messages = postProcessPrompt(request.body.messages, 'deepseek-reasoner', getPromptNames(request));
+        }
     } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.CUSTOM) {
         apiUrl = request.body.custom_url;
         apiKey = readSecret(request.user.directories, SECRET_KEYS.CUSTOM);
