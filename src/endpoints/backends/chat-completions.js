@@ -907,7 +907,7 @@ router.post('/generate', jsonParser, function (request, response) {
             cachingAtDepthForOpenRouterClaude(request.body.messages, cachingAtDepth);
         }
 
-        if (request.body.model.includes('deepseek-r1')) {
+        if (request.body.model?.includes('deepseek-r1')) {
             request.body.messages = postProcessPrompt(request.body.messages, 'deepseek-reasoner', getPromptNames(request));
         }
     } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.CUSTOM) {
