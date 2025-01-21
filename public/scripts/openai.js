@@ -1963,16 +1963,6 @@ async function sendOpenAIRequest(type, messages, signal) {
         if (isTextCompletion) {
             generate_data['stop'] = getStoppingStrings(isImpersonate, isContinue);
         }
-
-        if (generate_data.model.includes('deepseek-r1')) {
-            delete generate_data.top_p;
-            delete generate_data.temperature;
-            delete generate_data.frequency_penalty;
-            delete generate_data.presence_penalty;
-            delete generate_data.top_logprobs;
-            delete generate_data.logprobs;
-            delete generate_data.logit_bias;
-        }
     }
 
     if (isScale) {
