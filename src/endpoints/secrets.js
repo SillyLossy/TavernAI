@@ -215,7 +215,7 @@ router.post('/find', jsonParser, (request, response) => {
         const secret = readSecret(request.user.directories, key);
 
         if (!secret) {
-            response.sendStatus(404);
+            return response.sendStatus(404);
         }
 
         return response.send({ value: secret });

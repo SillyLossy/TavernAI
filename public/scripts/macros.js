@@ -26,6 +26,12 @@ Handlebars.registerHelper('helperMissing', function () {
  * @typedef {(nonce: string) => string} MacroFunction
  */
 
+/**
+ * @typedef {Object} CustomMacro
+ * @property {string} key - Macro name (key)
+ * @property {string} description - Optional description of the macro
+ */
+
 export class MacrosParser {
     /**
      * A map of registered macros.
@@ -34,11 +40,28 @@ export class MacrosParser {
     static #macros = new Map();
 
     /**
+     * A map of macro descriptions.
+     * @type {Map<string, string>}
+     */
+    static #descriptions = new Map();
+
+    /**
+     * Returns an iterator over all registered macros.
+     * @returns {IterableIterator<CustomMacro>}
+     */
+    static [Symbol.iterator] = function* () {
+        for (const macro of MacrosParser.#macros.keys()) {
+            yield { key: macro, description: MacrosParser.#descriptions.get(macro) };
+        }
+    };
+
+    /**
      * Registers a global macro that can be used anywhere where substitution is allowed.
      * @param {string} key Macro name (key)
      * @param {string|MacroFunction} value A string or a function that returns a string
+     * @param {string} [description] Optional description of the macro
      */
-    static registerMacro(key, value) {
+    static registerMacro(key, value, description = '') {
         if (typeof key !== 'string') {
             throw new Error('Macro key must be a string');
         }
@@ -64,6 +87,10 @@ export class MacrosParser {
         }
 
         this.#macros.set(key, value);
+
+        if (typeof description === 'string' && description) {
+            this.#descriptions.set(key, description);
+        }
     }
 
     /**
@@ -88,6 +115,8 @@ export class MacrosParser {
         if (!deleted) {
             console.warn(`Macro ${key} was not registered`);
         }
+
+        this.#descriptions.delete(key);
     }
 
     /**
@@ -202,10 +231,19 @@ export function getLastMessageId({ exclude_swipe_in_propress = true, filter = nu
  * @returns {number|null} The ID of the first message in the context
  */
 function getFirstIncludedMessageId() {
-    const index = Number(document.querySelector('.lastInContext')?.getAttribute('mesid'));
+    return chat_metadata['lastInContextMessageId'];
+}
 
-    if (!isNaN(index) && index >= 0) {
-        return index;
+/**
+ * Returns the ID of the first displayed message in the chat.
+ *
+ * @returns {number|null} The ID of the first displayed message
+ */
+function getFirstDisplayedMessageId() {
+    const mesId = Number(document.querySelector('#chat .mes')?.getAttribute('mesid'));
+
+    if (!isNaN(mesId) && mesId >= 0) {
+        return mesId;
     }
 
     return null;
@@ -467,6 +505,7 @@ export function evaluateMacros(content, env, postProcessFn) {
         { regex: /{{lastUserMessage}}/gi, replace: () => getLastUserMessage() },
         { regex: /{{lastCharMessage}}/gi, replace: () => getLastCharMessage() },
         { regex: /{{firstIncludedMessageId}}/gi, replace: () => String(getFirstIncludedMessageId() ?? '') },
+        { regex: /{{firstDisplayedMessageId}}/gi, replace: () => String(getFirstDisplayedMessageId() ?? '') },
         { regex: /{{lastSwipeId}}/gi, replace: () => String(getLastSwipeId() ?? '') },
         { regex: /{{currentSwipeId}}/gi, replace: () => String(getCurrentSwipeId() ?? '') },
         { regex: /{{reverse:(.+?)}}/gi, replace: (_, str) => Array.from(str).reverse().join('') },

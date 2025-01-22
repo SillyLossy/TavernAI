@@ -879,7 +879,7 @@
     "popup-button-no": "Nee",
     "popup-button-cancel": "Annuleren",
     "popup-button-import": "Importeren",
-    "Advanced Defininitions": "Geavanceerde definities",
+    "Advanced Definitions": "Geavanceerde definities",
     "Prompt Overrides": "Prompt-overschrijvingen",
     "(For Chat Completion and Instruct Mode)": "(Voor voltooiing van chat en instructiemodus)",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "Voeg {{original}} in in elk vak in om de respectievelijke standaardprompt vanuit systeeminstellingen op te nemen.",

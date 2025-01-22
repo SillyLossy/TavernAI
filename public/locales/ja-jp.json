@@ -879,7 +879,7 @@
     "popup-button-no": "いいえ",
     "popup-button-cancel": "キャンセル",
     "popup-button-import": "インポート",
-    "Advanced Defininitions": "高度な定義",
+    "Advanced Definitions": "高度な定義",
     "Prompt Overrides": "プロンプトのオーバーライド",
     "(For Chat Completion and Instruct Mode)": "（チャット補完と指示モード用）",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "システム設定からの対応するデフォルトのプロンプトを含めるには、どちらかのボックスに{{original}}を挿入します。",

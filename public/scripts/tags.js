@@ -196,9 +196,10 @@ function filterByTagState(entities, { globalDisplayFilters = false, subForEntity
                 return false;
             }
 
-            // Hide folders that have 0 visible sub entities after the first filtering round
+            // Hide folders that have 0 visible sub entities after the first filtering round, unless we are inside a search via search term.
+            // Then we want to display folders that mach too, even if the chars inside don't match the search.
             if (entity.type === 'tag') {
-                return entity.entities.length > 0;
+                return entity.entities.length > 0 || entitiesFilter.getFilterData(FILTER_TYPES.SEARCH);
             }
 
             return true;

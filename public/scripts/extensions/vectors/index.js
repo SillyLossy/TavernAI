@@ -30,6 +30,8 @@ import { textgen_types, textgenerationwebui_settings } from '../../textgen-setti
 import { SlashCommandParser } from '../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../slash-commands/SlashCommandArgument.js';
+import { SlashCommandEnumValue, enumTypes } from '../../slash-commands/SlashCommandEnumValue.js';
+import { slashCommandReturnHelper } from '../../slash-commands/SlashCommandReturnHelper.js';
 import { callGenericPopup, POPUP_RESULT, POPUP_TYPE } from '../../popup.js';
 import { generateWebLlmChatPrompt, isWebLlmSupported } from '../shared.js';
 
@@ -37,6 +39,7 @@ import { generateWebLlmChatPrompt, isWebLlmSupported } from '../shared.js';
  * @typedef {object} HashedMessage
  * @property {string} text - The hashed message text
  * @property {number} hash - The hash used as the vector key
+ * @property {number} index - The index of the message in the chat
  */
 
 const MODULE_NAME = 'vectors';
@@ -81,6 +84,7 @@ const settings = {
     chunk_size: 5000,
     chunk_count: 2,
     overlap_percent: 0,
+    only_custom_boundary: false,
 
     // For Data Bank
     size_threshold_db: 5,
@@ -570,7 +574,9 @@ async function vectorizeFile(fileText, fileName, collectionId, chunkSize, overla
         const delimiters = getChunkDelimiters();
         // Overlap should not be included in chunk size. It will be later compensated by overlapChunks
         chunkSize = overlapSize > 0 ? (chunkSize - overlapSize) : chunkSize;
-        const chunks = splitRecursive(fileText, chunkSize, delimiters).map((x, y, z) => overlapSize > 0 ? overlapChunks(x, y, z, overlapSize) : x);
+        const chunks = settings.only_custom_boundary && settings.force_chunk_delimiter
+            ? fileText.split(settings.force_chunk_delimiter)
+            : splitRecursive(fileText, chunkSize, delimiters).map((x, y, z) => overlapSize > 0 ? overlapChunks(x, y, z, overlapSize) : x);
         console.debug(`Vectors: Split file ${fileName} into ${chunks.length} chunks with ${overlapPercent}% overlap`, chunks);
 
         const items = chunks.map((chunk, index) => ({ hash: getStringHash(chunk), text: chunk, index: index }));
@@ -594,9 +600,17 @@ async function vectorizeFile(fileText, fileName, collectionId, chunkSize, overla
 /**
  * Removes the most relevant messages from the chat and displays them in the extension prompt
  * @param {object[]} chat Array of chat messages
+ * @param {number} _contextSize Context size (unused)
+ * @param {function} _abort Abort function (unused)
+ * @param {string} type Generation type
  */
-async function rearrangeChat(chat) {
+async function rearrangeChat(chat, _contextSize, _abort, type) {
     try {
+        if (type === 'quiet') {
+            console.debug('Vectors: Skipping quiet prompt');
+            return;
+        }
+
         // Clear the extension prompt
         setExtensionPrompt(EXTENSION_PROMPT_TAG, '', settings.position, settings.depth, settings.include_wi);
         setExtensionPrompt(EXTENSION_PROMPT_TAG_DB, '', settings.file_position_db, settings.file_depth_db, settings.include_wi, settings.file_depth_role_db);
@@ -717,7 +731,7 @@ const onChatEvent = debounce(async () => await moduleWorker.update(), debounce_t
  */
 async function getQueryText(chat, initiator) {
     let hashedMessages = chat
-        .map(x => ({ text: String(substituteParams(x.mes)), hash: getStringHash(substituteParams(x.mes)) }))
+        .map(x => ({ text: String(substituteParams(x.mes)), hash: getStringHash(substituteParams(x.mes)), index: chat.indexOf(x) }))
         .filter(x => x.text)
         .reverse()
         .slice(0, settings.query);
@@ -1546,6 +1560,12 @@ jQuery(async () => {
         saveSettingsDebounced();
     });
 
+    $('#vectors_only_custom_boundary').prop('checked', settings.only_custom_boundary).on('input', () => {
+        settings.only_custom_boundary = !!$('#vectors_only_custom_boundary').prop('checked');
+        Object.assign(extension_settings.vectors, settings);
+        saveSettingsDebounced();
+    });
+
     $('#vectors_ollama_pull').on('click', (e) => {
         const presetModel = extension_settings.vectors.ollama_model || '';
         e.preventDefault();
@@ -1595,25 +1615,55 @@ jQuery(async () => {
         callback: async (args, query) => {
             const clamp = (v) => Number.isNaN(v) ? null : Math.min(1, Math.max(0, v));
             const threshold = clamp(Number(args?.threshold ?? settings.score_threshold));
+            const validateCount = (v) => Number.isNaN(v) || !Number.isInteger(v) || v < 1 ? null : v;
+            const count = validateCount(Number(args?.count)) ?? settings.chunk_count_db;
             const source = String(args?.source ?? '');
             const attachments = source ? getDataBankAttachmentsForSource(source, false) : getDataBankAttachments(false);
             const collectionIds = await ingestDataBankAttachments(String(source));
-            const queryResults = await queryMultipleCollections(collectionIds, String(query), settings.chunk_count_db, threshold);
-
-            // Map collection IDs to file URLs
+            const queryResults = await queryMultipleCollections(collectionIds, String(query), count, threshold);
+    
+            // Get URLs
             const urls = Object
                 .keys(queryResults)
                 .map(x => attachments.find(y => getFileCollectionId(y.url) === x))
                 .filter(x => x)
                 .map(x => x.url);
+    
+            // Gets the actual text content of chunks
+            const getChunksText = () => {
+                let textResult = '';
+                for (const collectionId in queryResults) {
+                    const metadata = queryResults[collectionId].metadata?.filter(x => x.text)?.sort((a, b) => a.index - b.index)?.map(x => x.text)?.filter(onlyUnique) || [];
+                    textResult += metadata.join('\n') + '\n\n';
+                }
+                return textResult;
+            };
+            
+            if (args.return === 'chunks') {
+                return getChunksText();
+            }
 
-            return JSON.stringify(urls);
+            // @ts-ignore
+            return slashCommandReturnHelper.doReturn(args.return ?? 'object', urls, { objectToStringFunc: list => list.join('\n') });
+            
         },
         aliases: ['databank-search', 'data-bank-search'],
         helpString: 'Search the Data Bank for a specific query using vector similarity. Returns a list of file URLs with the most relevant content.',
         namedArgumentList: [
             new SlashCommandNamedArgument('threshold', 'Threshold for the similarity score in the [0, 1] range. Uses the global config value if not set.', ARGUMENT_TYPE.NUMBER, false, false, ''),
+            new SlashCommandNamedArgument('count', 'Maximum number of query results to return.', ARGUMENT_TYPE.NUMBER, false, false, ''),
             new SlashCommandNamedArgument('source', 'Optional filter for the attachments by source.', ARGUMENT_TYPE.STRING, false, false, '', ['global', 'character', 'chat']),
+            SlashCommandNamedArgument.fromProps({
+                name: 'return',
+                description: 'How you want the return value to be provided',
+                typeList: [ARGUMENT_TYPE.STRING],
+                defaultValue: 'object',
+                enumList: [
+                    new SlashCommandEnumValue('chunks', 'Return the actual content chunks', enumTypes.enum, '{}'),
+                    ...slashCommandReturnHelper.enumList({ allowObject: true })
+                ],
+                forceEnum: true,
+            })
         ],
         unnamedArgumentList: [
             new SlashCommandArgument('Query to search by.', ARGUMENT_TYPE.STRING, true, false),

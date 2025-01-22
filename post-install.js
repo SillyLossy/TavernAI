@@ -28,6 +28,44 @@ const color = {
     white: (mess) => color.byNum(mess, 37),
 };
 
+const keyMigrationMap = [
+    {
+        oldKey: 'disableThumbnails',
+        newKey: 'thumbnails.enabled',
+        migrate: (value) => !value,
+    },
+    {
+        oldKey: 'thumbnailsQuality',
+        newKey: 'thumbnails.quality',
+        migrate: (value) => value,
+    },
+    {
+        oldKey: 'avatarThumbnailsPng',
+        newKey: 'thumbnails.format',
+        migrate: (value) => (value ? 'png' : 'jpg'),
+    },
+    {
+        oldKey: 'disableChatBackup',
+        newKey: 'backups.chat.enabled',
+        migrate: (value) => !value,
+    },
+    {
+        oldKey: 'numberOfBackups',
+        newKey: 'backups.common.numberOfBackups',
+        migrate: (value) => value,
+    },
+    {
+        oldKey: 'maxTotalChatBackups',
+        newKey: 'backups.chat.maxTotalBackups',
+        migrate: (value) => value,
+    },
+    {
+        oldKey: 'chatBackupThrottleInterval',
+        newKey: 'backups.chat.throttleInterval',
+        migrate: (value) => value,
+    },
+];
+
 /**
  * Gets all keys from an object recursively.
  * @param {object} obj Object to get all keys from
@@ -83,6 +121,24 @@ function addMissingConfigValues() {
         const defaultConfig = yaml.parse(fs.readFileSync(path.join(process.cwd(), './default/config.yaml'), 'utf8'));
         let config = yaml.parse(fs.readFileSync(path.join(process.cwd(), './config.yaml'), 'utf8'));
 
+        // Migrate old keys to new keys
+        const migratedKeys = [];
+        for (const { oldKey, newKey, migrate } of keyMigrationMap) {
+            if (_.has(config, oldKey)) {
+                const oldValue = _.get(config, oldKey);
+                const newValue = migrate(oldValue);
+                _.set(config, newKey, newValue);
+                _.unset(config, oldKey);
+
+                migratedKeys.push({
+                    oldKey,
+                    newKey,
+                    oldValue,
+                    newValue,
+                });
+            }
+        }
+
         // Get all keys from the original config
         const originalKeys = getAllKeys(config);
 
@@ -95,11 +151,18 @@ function addMissingConfigValues() {
         // Find the keys that were added
         const addedKeys = _.difference(updatedKeys, originalKeys);
 
-        if (addedKeys.length === 0) {
+        if (addedKeys.length === 0 && migratedKeys.length === 0) {
             return;
         }
 
-        console.log('Adding missing config values to config.yaml:', addedKeys);
+        if (addedKeys.length > 0) {
+            console.log('Adding missing config values to config.yaml:', addedKeys);
+        }
+
+        if (migratedKeys.length > 0) {
+            console.log('Migrating config values in config.yaml:', migratedKeys);
+        }
+
         fs.writeFileSync('./config.yaml', yaml.stringify(config));
     } catch (error) {
         console.error(color.red('FATAL: Could not add missing config values to config.yaml'), error);

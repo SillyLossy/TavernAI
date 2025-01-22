@@ -895,7 +895,7 @@
     "popup-button-no": "아니요",
     "popup-button-cancel": "취소",
     "popup-button-import": "불러오기",
-    "Advanced Defininitions": "고급 정의",
+    "Advanced Definitions": "고급 정의",
     "Prompt Overrides": "프롬프트 무시",
     "(For Chat Completion and Instruct Mode)": "(채팅 완료 및 지시 모드의 경우)",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "{{original}}를 해당 상자에 넣어 시스템 설정의 기본 프롬프트를 포함합니다.",

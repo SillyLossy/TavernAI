@@ -1318,6 +1318,10 @@ button {
     transition: clip-path 200ms;
 }
 
+#send_textarea:placeholder-shown {
+    overflow: hidden;
+}
+
 #send_textarea:focus-visible {
     /* Disable outline for the chat bar itself, we add it to the outer div */
     outline: none;
@@ -3259,6 +3263,18 @@ grammarly-extension {
     align-items: center;
 }
 
+#creators_notes_div {
+    align-items: baseline;
+}
+
+#creators_note_desc_hidden {
+    display: none;
+}
+
+#creators_notes_div:has(#spoiler_free_desc_button.fa-eye-slash) #creators_note_desc_hidden {
+    display: initial;
+}
+
 .alternate_greeting details {
     padding: 2px;
 }
@@ -4799,7 +4815,7 @@ body:not(.sd) .mes_img_swipes {
 
 .img_enlarged {
     object-fit: contain;
-    width: 100%;
+    max-width: 100%;
     height: 100%;
     cursor: zoom-in
 }
@@ -5734,4 +5750,16 @@ body:not(.movingUI) .drawer-content.maximized {
         flex-basis: 100%;
     }
 
+}
+
+/* Constrict the scroll of alternate greetings to only the dynamic form section */
+.alternate_grettings {
+    display: grid;
+    grid-template-rows: auto auto auto 1fr;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.alternate_greetings_list {
+    overflow-y: scroll;
 }

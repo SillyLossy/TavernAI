@@ -5,7 +5,6 @@ import { publicLibConfig } from '../../webpack.config.js';
 export default function getWebpackServeMiddleware() {
     const outputPath = publicLibConfig.output?.path;
     const outputFile = publicLibConfig.output?.filename;
-    const compiler = webpack(publicLibConfig);
 
     /**
      * A very spartan recreation of webpack-dev-middleware.
@@ -27,6 +26,8 @@ export default function getWebpackServeMiddleware() {
      * @returns {Promise<void>}
      */
     devMiddleware.runWebpackCompiler = () => {
+        const compiler = webpack(publicLibConfig);
+
         return new Promise((resolve) => {
             console.log();
             console.log('Compiling frontend libraries...');
@@ -36,7 +37,9 @@ export default function getWebpackServeMiddleware() {
                     console.log(output);
                     console.log();
                 }
-                resolve();
+                compiler.close(() => {
+                    resolve();
+                });
             });
         });
     };

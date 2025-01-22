@@ -83,25 +83,39 @@ autorun: true
 # Avoids using 'localhost' for autorun in auto mode.
 # use if you don't have 'localhost' in your hosts file
 avoidLocalhost: false
-# Disable thumbnail generation
-disableThumbnails: false
-# Thumbnail quality (0-100)
-thumbnailsQuality: 95
-# Generate avatar thumbnails as PNG instead of JPG (preserves transparency but increases filesize by about 100%)
-#  Changing this only affects new thumbnails. To recreate the old ones, clear out your ST/thumbnails/ folder.
-avatarThumbnailsPng: false
+
+## BACKUP CONFIGURATION
+backups:
+  # Common settings for all backup types
+  common:
+    # Number of backups to keep for each chat and settings file
+    numberOfBackups: 50
+  chat:
+    # Enable automatic chat backups
+    enabled: true
+    # Maximum number of chat backups to keep per user (starting from the most recent). Set to -1 to keep all backups.
+    maxTotalBackups: -1
+    # Interval in milliseconds to throttle chat backups per user
+    throttleInterval: 10000
+
+# THUMBNAILING CONFIGURATION
+thumbnails:
+  # Enable thumbnail generation
+  enabled: true
+  # Image format of avatar thumbnails:
+  # * "jpg": best compression with adjustable quality, no transparency
+  # * "png": preserves transparency but increases filesize by about 100%
+  # Changing this only affects new thumbnails. To recreate the old ones, clear out /thumbnails folder in your user data.
+  format: "jpg"
+  # JPG thumbnail quality (0-100)
+  quality: 95
+  # Maximum thumbnail dimensions per type [width, height]
+  dimensions: { 'bg': [160, 90], 'avatar': [96, 144] }
+
 # Allow secret keys exposure via API
 allowKeysExposure: false
 # Skip new default content checks
 skipContentCheck: false
-# Disable automatic chats backup
-disableChatBackup: false
-# Number of backups to keep for each chat and settings file
-numberOfBackups: 50
-# Maximum number of chat backups to keep per user (starting from the most recent). Set to -1 to keep all backups.
-maxTotalChatBackups: -1
-# Interval in milliseconds to throttle chat backups per user
-chatBackupThrottleInterval: 10000
 # Allowed hosts for card downloads
 whitelistImportDomains:
   - localhost

@@ -550,7 +550,7 @@ async function importFromYaml(uploadPath, context, preservedFileName) {
  * @returns {Promise<string>} Internal name of the character
  */
 async function importFromCharX(uploadPath, { request }, preservedFileName) {
-    const data = fs.readFileSync(uploadPath);
+    const data = fs.readFileSync(uploadPath).buffer;
     fs.rmSync(uploadPath);
     console.log('Importing from CharX');
     const cardBuffer = await extractFileFromZipBuffer(data, 'card.json');

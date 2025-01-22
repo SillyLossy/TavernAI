@@ -37,6 +37,7 @@ export const enumIcons = {
     voice: '🎤',
     server: '🖥️',
     popup: '🗔',
+    image: '🖼️',
 
     true: '✔️',
     false: '❌',

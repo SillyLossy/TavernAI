@@ -167,6 +167,8 @@ import {
     flashHighlight,
     isTrueBoolean,
     toggleDrawer,
+    isElementInViewport,
+    copyText,
 } from './scripts/utils.js';
 import { debounce_timeout } from './scripts/constants.js';
 
@@ -573,7 +575,7 @@ export const DEFAULT_SAVE_EDIT_TIMEOUT = debounce_timeout.relaxed;
 /** @type {debounce_timeout} The debounce timeout used for printing. debounce_timeout.quick: 100 ms */
 export const DEFAULT_PRINT_TIMEOUT = debounce_timeout.quick;
 
-export const saveSettingsDebounced = debounce(() => saveSettings(), DEFAULT_SAVE_EDIT_TIMEOUT);
+export const saveSettingsDebounced = debounce((loopCounter = 0) => saveSettings(loopCounter), DEFAULT_SAVE_EDIT_TIMEOUT);
 export const saveCharacterDebounced = debounce(() => $('#create_button').trigger('click'), DEFAULT_SAVE_EDIT_TIMEOUT);
 
 /**
@@ -1827,10 +1829,10 @@ export async function replaceCurrentChat() {
     }
 }
 
-export function showMoreMessages() {
+export function showMoreMessages(messagesToLoad = null) {
     const firstDisplayedMesId = $('#chat').children('.mes').first().attr('mesid');
     let messageId = Number(firstDisplayedMesId);
-    let count = power_user.chat_truncation || Number.MAX_SAFE_INTEGER;
+    let count = messagesToLoad || power_user.chat_truncation || Number.MAX_SAFE_INTEGER;
 
     // If there are no messages displayed, or the message somehow has no mesid, we default to one higher than last message id,
     // so the first "new" message being shown will be the last available message
@@ -1840,6 +1842,7 @@ export function showMoreMessages() {
 
     console.debug('Inserting messages before', messageId, 'count', count, 'chat length', chat.length);
     const prevHeight = $('#chat').prop('scrollHeight');
+    const isButtonInView = isElementInViewport($('#show_more_messages')[0]);
 
     while (messageId > 0 && count > 0) {
         let newMessageId = messageId - 1;
@@ -1852,8 +1855,10 @@ export function showMoreMessages() {
         $('#show_more_messages').remove();
     }
 
-    const newHeight = $('#chat').prop('scrollHeight');
-    $('#chat').scrollTop(newHeight - prevHeight);
+    if (isButtonInView) {
+        const newHeight = $('#chat').prop('scrollHeight');
+        $('#chat').scrollTop(newHeight - prevHeight);
+    }
 }
 
 export async function printMessages() {
@@ -2311,16 +2316,15 @@ export function addCopyToCodeBlocks(messageElement) {
     const codeBlocks = $(messageElement).find('pre code');
     for (let i = 0; i < codeBlocks.length; i++) {
         hljs.highlightElement(codeBlocks.get(i));
-        if (navigator.clipboard !== undefined) {
-            const copyButton = document.createElement('i');
-            copyButton.classList.add('fa-solid', 'fa-copy', 'code-copy', 'interactable');
-            copyButton.title = 'Copy code';
-            codeBlocks.get(i).appendChild(copyButton);
-            copyButton.addEventListener('pointerup', function (event) {
-                navigator.clipboard.writeText(codeBlocks.get(i).innerText);
-                toastr.info(t`Copied!`, '', { timeOut: 2000 });
-            });
-        }
+        const copyButton = document.createElement('i');
+        copyButton.classList.add('fa-solid', 'fa-copy', 'code-copy', 'interactable');
+        copyButton.title = 'Copy code';
+        codeBlocks.get(i).appendChild(copyButton);
+        copyButton.addEventListener('pointerup', async function () {
+            const text = codeBlocks.get(i).innerText;
+            await copyText(text);
+            toastr.info(t`Copied!`, '', { timeOut: 2000 });
+        });
     }
 }
 
@@ -2714,12 +2718,13 @@ export function getStoppingStrings(isImpersonate, isContinue) {
  * @param {string} quietImage Image to use for the quiet prompt
  * @param {string} quietName Name to use for the quiet prompt (defaults to "System:")
  * @param {number} [responseLength] Maximum response length. If unset, the global default value is used.
+ * @param {number} force_chid Character ID to use for this generation run. Works in groups only.
  * @returns
  */
-export async function generateQuietPrompt(quiet_prompt, quietToLoud, skipWIAN, quietImage = null, quietName = null, responseLength = null) {
+export async function generateQuietPrompt(quiet_prompt, quietToLoud, skipWIAN, quietImage = null, quietName = null, responseLength = null, force_chid = null) {
     console.log('got into genQuietPrompt');
     const responseLengthCustomized = typeof responseLength === 'number' && responseLength > 0;
-    let originalResponseLength = -1;
+    let eventHook = () => { };
     try {
         /** @type {GenerateOptions} */
         const options = {
@@ -2729,12 +2734,17 @@ export async function generateQuietPrompt(quiet_prompt, quietToLoud, skipWIAN, q
             force_name2: true,
             quietImage: quietImage,
             quietName: quietName,
+            force_chid: force_chid,
         };
-        originalResponseLength = responseLengthCustomized ? saveResponseLength(main_api, responseLength) : -1;
+        if (responseLengthCustomized) {
+            TempResponseLength.save(main_api, responseLength);
+            eventHook = TempResponseLength.setupEventHook(main_api);
+        }
         return await Generate('quiet', options);
     } finally {
-        if (responseLengthCustomized) {
-            restoreResponseLength(main_api, originalResponseLength);
+        if (responseLengthCustomized && TempResponseLength.isCustomized()) {
+            TempResponseLength.restore(main_api);
+            TempResponseLength.removeEventHook(main_api, eventHook);
         }
     }
 }
@@ -3378,9 +3388,9 @@ export async function generateRaw(prompt, api, instructOverride, quietToLoud, sy
 
     const abortController = new AbortController();
     const responseLengthCustomized = typeof responseLength === 'number' && responseLength > 0;
-    let originalResponseLength = -1;
     const isInstruct = power_user.instruct.enabled && api !== 'openai' && api !== 'novel' && !instructOverride;
     const isQuiet = true;
+    let eventHook = () => { };
 
     if (systemPrompt) {
         systemPrompt = substituteParams(systemPrompt);
@@ -3394,7 +3404,9 @@ export async function generateRaw(prompt, api, instructOverride, quietToLoud, sy
     prompt = isInstruct ? (prompt + formatInstructModePrompt(name2, false, '', name1, name2, isQuiet, quietToLoud)) : (prompt + '\n');
 
     try {
-        originalResponseLength = responseLengthCustomized ? saveResponseLength(api, responseLength) : -1;
+        if (responseLengthCustomized) {
+            TempResponseLength.save(api, responseLength);
+        }
         let generateData = {};
 
         switch (api) {
@@ -3407,20 +3419,24 @@ export async function generateRaw(prompt, api, instructOverride, quietToLoud, sy
                     const koboldSettings = koboldai_settings[koboldai_setting_names[preset_settings]];
                     generateData = getKoboldGenerationData(prompt, koboldSettings, amount_gen, max_context, isHorde, 'quiet');
                 }
+                TempResponseLength.restore(api);
                 break;
             case 'novel': {
                 const novelSettings = novelai_settings[novelai_setting_names[nai_settings.preset_settings_novel]];
                 generateData = getNovelGenerationData(prompt, novelSettings, amount_gen, false, false, null, 'quiet');
+                TempResponseLength.restore(api);
                 break;
             }
             case 'textgenerationwebui':
                 generateData = getTextGenGenerationData(prompt, amount_gen, false, false, null, 'quiet');
+                TempResponseLength.restore(api);
                 break;
             case 'openai': {
                 generateData = [{ role: 'user', content: prompt.trim() }];
                 if (systemPrompt) {
                     generateData.unshift({ role: 'system', content: systemPrompt.trim() });
                 }
+                eventHook = TempResponseLength.setupEventHook(api);
             } break;
         }
 
@@ -3462,41 +3478,100 @@ export async function generateRaw(prompt, api, instructOverride, quietToLoud, sy
 
         return message;
     } finally {
-        if (responseLengthCustomized) {
-            restoreResponseLength(api, originalResponseLength);
+        if (responseLengthCustomized && TempResponseLength.isCustomized()) {
+            TempResponseLength.restore(api);
+            TempResponseLength.removeEventHook(api, eventHook);
         }
     }
 }
 
-/**
- * Temporarily change the response length for the specified API.
- * @param {string} api API to use.
- * @param {number} responseLength Target response length.
- * @returns {number} The original response length.
- */
-function saveResponseLength(api, responseLength) {
-    let oldValue = -1;
-    if (api === 'openai') {
-        oldValue = oai_settings.openai_max_tokens;
-        oai_settings.openai_max_tokens = responseLength;
-    } else {
-        oldValue = amount_gen;
-        amount_gen = responseLength;
-    }
-    return oldValue;
-}
+class TempResponseLength {
+    static #originalResponseLength = -1;
+    static #lastApi = null;
 
-/**
- * Restore the original response length for the specified API.
- * @param {string} api API to use.
- * @param {number} responseLength Target response length.
- * @returns {void}
- */
-function restoreResponseLength(api, responseLength) {
-    if (api === 'openai') {
-        oai_settings.openai_max_tokens = responseLength;
-    } else {
-        amount_gen = responseLength;
+    static isCustomized() {
+        return this.#originalResponseLength > -1;
+    }
+
+    /**
+     * Save the current response length for the specified API.
+     * @param {string} api API identifier
+     * @param {number} responseLength New response length
+     */
+    static save(api, responseLength) {
+        if (api === 'openai') {
+            this.#originalResponseLength = oai_settings.openai_max_tokens;
+            oai_settings.openai_max_tokens = responseLength;
+        } else {
+            this.#originalResponseLength = amount_gen;
+            amount_gen = responseLength;
+        }
+
+        this.#lastApi = api;
+        console.log('[TempResponseLength] Saved original response length:', TempResponseLength.#originalResponseLength);
+    }
+
+    /**
+     * Restore the original response length for the specified API.
+     * @param {string|null} api API identifier
+     * @returns {void}
+     */
+    static restore(api) {
+        if (this.#originalResponseLength === -1) {
+            return;
+        }
+        if (!api && this.#lastApi) {
+            api = this.#lastApi;
+        }
+        if (api === 'openai') {
+            oai_settings.openai_max_tokens = this.#originalResponseLength;
+        } else {
+            amount_gen = this.#originalResponseLength;
+        }
+
+        console.log('[TempResponseLength] Restored original response length:', this.#originalResponseLength);
+        this.#originalResponseLength = -1;
+        this.#lastApi = null;
+    }
+
+    /**
+     * Sets up an event hook to restore the original response length when the event is emitted.
+     * @param {string} api API identifier
+     * @returns {function(): void} Event hook function
+     */
+    static setupEventHook(api) {
+        const eventHook = () => {
+            if (this.isCustomized()) {
+                this.restore(api);
+            }
+        };
+
+        switch (api) {
+            case 'openai':
+                eventSource.once(event_types.CHAT_COMPLETION_SETTINGS_READY, eventHook);
+                break;
+            default:
+                eventSource.once(event_types.GENERATE_AFTER_DATA, eventHook);
+                break;
+        }
+
+        return eventHook;
+    }
+
+    /**
+     * Removes the event hook for the specified API.
+     * @param {string} api API identifier
+     * @param {function(): void} eventHook Previously set up event hook
+     */
+    static removeEventHook(api, eventHook) {
+        switch (api) {
+            case 'openai':
+                eventSource.removeListener(event_types.CHAT_COMPLETION_SETTINGS_READY, eventHook);
+                break;
+            default:
+                eventSource.removeListener(event_types.GENERATE_AFTER_DATA, eventHook);
+                break;
+        }
     }
 }
 
@@ -3764,9 +3839,9 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
     // Determine token limit
     let this_max_context = getMaxContextSize();
 
-    if (!dryRun && type !== 'quiet') {
+    if (!dryRun) {
         console.debug('Running extension interceptors');
-        const aborted = await runGenerationInterceptors(coreChat, this_max_context);
+        const aborted = await runGenerationInterceptors(coreChat, this_max_context, type);
 
         if (aborted) {
             console.debug('Generation aborted by extension interceptors');
@@ -3827,7 +3902,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
      * @returns {string[]} Examples array with block heading
      */
     function parseMesExamples(examplesStr) {
-        if (examplesStr.length === 0 || examplesStr === '<START>') {
+        if (!examplesStr || examplesStr.length === 0 || examplesStr === '<START>') {
             return [];
         }
 
@@ -5394,7 +5469,7 @@ async function promptItemize(itemizedPrompts, requestedMesId) {
     } else {
         diffPrevPrompt.style.display = 'none';
     }
-    popup.dlg.querySelector('#copyPromptToClipboard').addEventListener('click', function () {
+    popup.dlg.querySelector('#copyPromptToClipboard').addEventListener('pointerup', async function () {
         let rawPrompt = itemizedPrompts[PromptArrayItemForRawPromptDisplay].rawPrompt;
         let rawPromptValues = rawPrompt;
 
@@ -5402,7 +5477,7 @@ async function promptItemize(itemizedPrompts, requestedMesId) {
             rawPromptValues = rawPrompt.map(x => x.content).join('\n');
         }
 
-        navigator.clipboard.writeText(rawPromptValues);
+        await copyText(rawPromptValues);
         toastr.info(t`Copied!`);
     });
 
@@ -5423,20 +5498,24 @@ async function promptItemize(itemizedPrompts, requestedMesId) {
     await popup.show();
 }
 
-function setInContextMessages(lastmsg, type) {
+function setInContextMessages(msgInContextCount, type) {
     $('#chat .mes').removeClass('lastInContext');
 
     if (type === 'swipe' || type === 'regenerate' || type === 'continue') {
-        lastmsg++;
+        msgInContextCount++;
     }
 
-    const lastMessageBlock = $('#chat .mes:not([is_system="true"])').eq(-lastmsg);
+    const lastMessageBlock = $('#chat .mes:not([is_system="true"])').eq(-msgInContextCount);
     lastMessageBlock.addClass('lastInContext');
 
     if (lastMessageBlock.length === 0) {
         const firstMessageId = getFirstDisplayedMessageId();
         $(`#chat .mes[mesid="${firstMessageId}"`).addClass('lastInContext');
     }
+
+    // Update last id to chat. No metadata save on purpose, gets hopefully saved via another call
+    const lastMessageId = Math.max(0, chat.length - msgInContextCount);
+    chat_metadata['lastInContextMessageId'] = lastMessageId;
 }
 
 /**
@@ -6855,10 +6934,21 @@ function selectKoboldGuiPreset() {
         .trigger('change');
 }
 
-export async function saveSettings(type) {
+export async function saveSettings(loopCounter = 0) {
     if (!settingsReady) {
         console.warn('Settings not ready, aborting save');
         return;
+    }
+
+    const MAX_RETRIES = 3;
+    if (TempResponseLength.isCustomized()) {
+        if (loopCounter < MAX_RETRIES) {
+            console.warn('Response length is currently being overridden, scheduling another save');
+            saveSettingsDebounced(++loopCounter);
+            return;
+        }
+        console.error('Response length is currently being overridden, but the save loop has reached the maximum number of retries');
+        TempResponseLength.restore(null);
     }
 
     //console.log('Entering settings with name1 = '+name1);
@@ -7299,7 +7389,7 @@ export function select_rm_info(type, charId, previousCharId = null) {
     // Set a timeout so multiple flashes don't overlap
     clearTimeout(importFlashTimeout);
     importFlashTimeout = setTimeout(function () {
-        if (type === 'char_import' || type === 'char_create') {
+        if (type === 'char_import' || type === 'char_create' || type === 'char_import_no_toast') {
             // Find the page at which the character is located
             const avatarFileName = charId;
             const charData = getEntitiesList({ doFilter: true });
@@ -8851,24 +8941,61 @@ export async function processDroppedFiles(files, data = new Map()) {
         'charx',
     ];
 
+    const avatarFileNames = [];
     for (const file of files) {
         const extension = file.name.split('.').pop().toLowerCase();
         if (allowedMimeTypes.some(x => file.type.startsWith(x)) || allowedExtensions.includes(extension)) {
             const preservedName = data instanceof Map && data.get(file);
-            await importCharacter(file, preservedName);
+            const avatarFileName = await importCharacter(file, { preserveFileName: preservedName });
+            if (avatarFileName !== undefined) {
+                avatarFileNames.push(avatarFileName);
+            }
         } else {
             toastr.warning(t`Unsupported file type: ` + file.name);
+        }
+    }
+
+    if (avatarFileNames.length > 0) {
+        await importCharactersTags(avatarFileNames);
+        selectImportedChar(avatarFileNames[avatarFileNames.length - 1]);
+    }
+}
+
+/**
+ * Imports tags for the given characters
+ * @param {string[]} avatarFileNames character avatar filenames whose tags are to import
+ */
+async function importCharactersTags(avatarFileNames) {
+    await getCharacters();
+    for (let i = 0; i < avatarFileNames.length; i++) {
+        if (power_user.tag_import_setting !== tag_import_setting.NONE) {
+            const importedCharacter = characters.find(character => character.avatar === avatarFileNames[i]);
+            await importTags(importedCharacter);
         }
     }
 }
 
 /**
+ * Selects the given imported char
+ * @param {string} charId char to select
+ */
+function selectImportedChar(charId) {
+    let oldSelectedChar = null;
+    if (this_chid !== undefined) {
+        oldSelectedChar = characters[this_chid].avatar;
+    }
+    select_rm_info('char_import_no_toast', charId, oldSelectedChar);
+}
+
+/**
  * Imports a character from a file.
  * @param {File} file File to import
- * @param {string?} preserveFileName Whether to preserve original file name
- * @returns {Promise<void>}
+ * @param {object} [options] - Options
+ * @param {string} [options.preserveFileName] Whether to preserve original file name
+ * @param {Boolean} [options.importTags=false] Whether to import tags
+ * @returns {Promise<string>}
  */
-async function importCharacter(file, preserveFileName = '') {
+async function importCharacter(file, { preserveFileName = '', importTags = false } = {}) {
     if (is_group_generating || is_send_press) {
         toastr.error(t`Cannot import characters while generating. Stop the request and try again.`, t`Import aborted`);
         throw new Error('Cannot import character while generating');
@@ -8904,19 +9031,14 @@ async function importCharacter(file, preserveFileName = '') {
     if (data.file_name !== undefined) {
         $('#character_search_bar').val('').trigger('input');
 
-        let oldSelectedChar = null;
-        if (this_chid !== undefined) {
-            oldSelectedChar = characters[this_chid].avatar;
-        }
+        toastr.success(t`Character Created: ${String(data.file_name).replace('.png', '')}`);
+        let avatarFileName = `${data.file_name}.png`;
+        if (importTags) {
+            await importCharactersTags([avatarFileName]);
 
-        await getCharacters();
-        select_rm_info('char_import', data.file_name, oldSelectedChar);
-        if (power_user.tag_import_setting !== tag_import_setting.NONE) {
-            let currentContext = getContext();
-            let avatarFileName = `${data.file_name}.png`;
-            let importedCharacter = currentContext.characters.find(character => character.avatar === avatarFileName);
-            await importTags(importedCharacter);
+            selectImportedChar(data.file_name);
         }
+        return avatarFileName;
     }
 }
 
@@ -9385,7 +9507,7 @@ API Settings: ${JSON.stringify(getSettingsContents[getSettingsContents.main_api 
         //console.log(logMessage);
 
         try {
-            await navigator.clipboard.writeText(logMessage);
+            await copyText(logMessage);
             toastr.info('Your ST API setup data has been copied to the clipboard.');
         } catch (error) {
             toastr.error('Failed to copy ST Setup to clipboard:', error);
@@ -10450,24 +10572,18 @@ jQuery(async function () {
         setTimeout(function () { $('#shadow_select_chat_popup').css('display', 'none'); }, animation_duration);
     });
 
-    if (navigator.clipboard === undefined) {
-        // No clipboard support
-        $('.mes_copy').remove();
-    }
-    else {
-        $(document).on('pointerup', '.mes_copy', function () {
-            if (this_chid !== undefined || selected_group || name2 === neutralCharacterName) {
-                try {
-                    const messageId = $(this).closest('.mes').attr('mesid');
-                    const text = chat[messageId]['mes'];
-                    navigator.clipboard.writeText(text);
-                    toastr.info('Copied!', '', { timeOut: 2000 });
-                } catch (err) {
-                    console.error('Failed to copy: ', err);
-                }
+    $(document).on('pointerup', '.mes_copy', async function () {
+        if (this_chid !== undefined || selected_group || name2 === neutralCharacterName) {
+            try {
+                const messageId = $(this).closest('.mes').attr('mesid');
+                const text = chat[messageId]['mes'];
+                await copyText(text);
+                toastr.info('Copied!', '', { timeOut: 2000 });
+            } catch (err) {
+                console.error('Failed to copy: ', err);
             }
-        });
-    }
+        }
+    });
 
     $(document).on('pointerup', '.mes_prompt', async function () {
         let mesIdForItemization = $(this).closest('.mes').attr('mesId');
@@ -10795,8 +10911,17 @@ jQuery(async function () {
             return;
         }
 
+        const avatarFileNames = [];
         for (const file of e.target.files) {
-            await importCharacter(file);
+            const avatarFileName = await importCharacter(file);
+            if (avatarFileName !== undefined) {
+                avatarFileNames.push(avatarFileName);
+            }
+        }
+
+        if (avatarFileNames.length > 0) {
+            await importCharactersTags(avatarFileNames);
+            selectImportedChar(avatarFileNames[avatarFileNames.length - 1]);
         }
     });
 
@@ -11352,4 +11477,3 @@ jQuery(async function () {
 
     initCustomSelectedSamplers();
 });
-

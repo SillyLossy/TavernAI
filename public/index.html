@@ -1934,22 +1934,24 @@
                                         <label for="openai_function_calling" class="checkbox_label flexWrap widthFreeExpand">
                                             <input id="openai_function_calling" type="checkbox" />
                                             <span data-i18n="Enable function calling">Enable function calling</span>
-                                            <div class="flexBasis100p toggle-description justifyLeft">
-                                                <span data-i18n="enable_functions_desc_1">Allows using </span><a href="https://platform.openai.com/docs/guides/function-calling" target="_blank" data-i18n="enable_functions_desc_2">function tools</a>.
-                                                <span data-i18n="enable_functions_desc_3">Can be utilized by various extensions to provide additional functionality.</span>
-                                            </div>
                                         </label>
+                                        <div class="flexBasis100p toggle-description justifyLeft">
+                                            <span data-i18n="enable_functions_desc_1">Allows using </span><a href="https://platform.openai.com/docs/guides/function-calling" target="_blank" data-i18n="enable_functions_desc_2">function tools</a>.
+                                            <span data-i18n="enable_functions_desc_3">Can be utilized by various extensions to provide additional functionality.</span>
+                                        </div>
                                     </div>
                                     <div class="range-block" data-source="openai,openrouter,makersuite,claude,custom,01ai">
                                         <label for="openai_image_inlining" class="checkbox_label flexWrap widthFreeExpand">
                                             <input id="openai_image_inlining" type="checkbox" />
                                             <span data-i18n="Send inline images">Send inline images</span>
-                                            <div id="image_inlining_hint" class="flexBasis100p toggle-description justifyLeft">
-                                                <span data-i18n="image_inlining_hint_1">Sends images in prompts if the model supports it (e.g. GPT-4V, Claude 3 or Llava 13B).
-                                                    Use the</span> <code><i class="fa-solid fa-paperclip"></i></code> <span data-i18n="image_inlining_hint_2">action on any message or the</span>
-                                                <code><i class="fa-solid fa-wand-magic-sparkles"></i></code> <span data-i18n="image_inlining_hint_3">menu to attach an image file to the chat.</span>
-                                            </div>
                                         </label>
+                                        <div id="image_inlining_hint" class="flexBasis100p toggle-description justifyLeft">
+                                            <span data-i18n="image_inlining_hint_1">Sends images in prompts if the model supports it (e.g. GPT-4V, Claude 3 or Llava 13B). Use the</span>
+                                            <code><i class="fa-solid fa-paperclip"></i></code>
+                                            <span data-i18n="image_inlining_hint_2">action on any message or the</span>
+                                            <code><i class="fa-solid fa-wand-magic-sparkles"></i></code>
+                                            <span data-i18n="image_inlining_hint_3">menu to attach an image file to the chat.</span>
+                                        </div>
                                         <div class="flex-container flexFlowColumn wide100p textAlignCenter marginTop10" data-source="openai,custom">
                                             <label for="openai_inline_image_quality" data-i18n="Inline Image Quality">
                                                 Inline Image Quality
@@ -2278,7 +2280,7 @@
                                     <h4 data-i18n="Model Providers">Model Providers</h4>
                                     <select id="openrouter_providers_text" class="openrouter_providers" multiple>
                                     </select>
-                                    <label class="checkbox_label" for="openrouter_allow_fallbacks_textgenerationwebui" title="Automatically chooses an alternative provider if chosen providers can't serve your request.">
+                                    <label class="checkbox_label" data-i18n="[title]Automatically chooses an alternative provider if chosen providers can't serve your request." for="openrouter_allow_fallbacks_textgenerationwebui" title="Automatically chooses an alternative provider if chosen providers can't serve your request.">
                                         <input id="openrouter_allow_fallbacks_textgenerationwebui" type="checkbox" />
                                         <span data-i18n="Allow fallback providers">Allow fallback providers</span>
                                     </label>
@@ -2902,7 +2904,7 @@
                             <div>
                                 <h4 data-i18n="Window AI Model">Window AI Model</h4>
                                 <select id="model_windowai_select">
-                                    <option value="">Use extension settings</option>
+                                    <option data-i18n="Use extension settings" value="">Use extension settings</option>
                                     <option value="openai/gpt-3.5-turbo">openai/gpt-3.5-turbo</option>
                                     <option value="openai/gpt-3.5-turbo-16k">openai/gpt-3.5-turbo-16k</option>
                                     <option value="openai/gpt-4">openai/gpt-4</option>
@@ -2977,14 +2979,14 @@
                                 <h4 data-i18n="Model Providers">Model Providers</h4>
                                 <select id="openrouter_providers_chat" class="openrouter_providers" multiple>
                                 </select>
-                                <label class="checkbox_label marginTopBot5" for="openrouter_allow_fallbacks" title="Automatically chooses an alternative provider if chosen providers can't serve your request.">
+                                <label class="checkbox_label marginTopBot5" for="openrouter_allow_fallbacks" data-i18n="[title]Automatically chooses an alternative provider if chosen providers can't serve your request." title="Automatically chooses an alternative provider if chosen providers can't serve your request.">
                                     <input id="openrouter_allow_fallbacks" type="checkbox" />
                                     <span data-i18n="Allow fallback providers">Allow fallback providers</span>
                                 </label>
                             </div>
                             <small class="marginTopBot5">
                                 <i class="fa-solid fa-lightbulb"></i>
-                                <span>To use instruct formatting, switch to OpenRouter under Text Completion API.</span>
+                                <span data-i18n="To use instruct formatting, switch to OpenRouter under Text Completion API.">To use instruct formatting, switch to OpenRouter under Text Completion API.</span>
                             </small>
                         </form>
                         <form id="scale_form" data-source="scale" action="javascript:void(null);" method="post" enctype="multipart/form-data">
@@ -3319,7 +3321,7 @@
                             </div>
                             <h4 data-i18n="Enter a Model ID">Enter a Model ID</h4>
                             <div class="flex-container">
-                                <input list="model_custom_select_fill" id="custom_model_id" class="text_pole wide100p" value="" autocomplete="off" data-i18n="[placeholder]Example: gpt-3.5-turbo" placeholder="Example: gpt-3.5-turbo">
+                                <input list="model_custom_select_fill" id="custom_model_id" class="text_pole wide100p" value="" autocomplete="off" data-i18n="[placeholder]Example: gpt-4o" placeholder="Example: gpt-4o">
                                 <datalist id="model_custom_select_fill" class="text_pole model_custom_select"></datalist>
                             </div>
                             <h4 data-i18n="Available Models">Available Models</h4>
@@ -4047,7 +4049,7 @@
                                 <h3 class="margin0">
                                     <span data-i18n="User Settings">User Settings</span>
 
-                                    <a href="https://docs.sillytavern.app/usage/user_settings/" class="notes-link" target="_blank">
+                                    <a href="https://docs.sillytavern.app/usage/user-settings/" class="notes-link" target="_blank">
                                         <span class="fa-solid fa-circle-question note-link-span"></span>
                                     </a>
                                 </h3>
@@ -4601,7 +4603,7 @@
                                     </div>
                                 </div>
                                 <div nane="AutoContiueBlock" class="inline-drawer wide100p flexFlowColumn">
-                                    <div class="inline-drawer-toggle inline-drawer-header userSettingsInnerExpandable" title="Automatically 'continue' a response if the model stopped before reaching a certain amount of tokens.">
+                                    <div class="inline-drawer-toggle inline-drawer-header userSettingsInnerExpandable" data-i18n="[title]Automatically 'continue' a response if the model stopped before reaching a certain amount of tokens." title="Automatically 'continue' a response if the model stopped before reaching a certain amount of tokens.">
                                         <b><span data-i18n="Auto-Continue">Auto-Continue</span></b>
                                         <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
                                     </div>
@@ -4819,6 +4821,8 @@
                         <div id="live2d_container" class="extension_container"></div>
                         <div id="vrm_container" class="extension_container"></div>
                         <div id="timelines_container" class="extension_container"></div>
+                        <div id="webllm_container" class="extension_container"></div>
+                        <div id="rss_container" class="extension_container"></div>
                     </div>
                     <div id="extensions_settings2" class="flex1 wide50p">
                         <div id="websearch_container" class="extension_container"></div>
@@ -4833,6 +4837,9 @@
                         <div id="vectors_container" class="extension_container"></div>
                         <div id="randomizer_container" class="extension_container"></div>
                         <div id="chromadb_container" class="extension_container"></div>
+                        <div id="message_limit_container" class="extension_container"></div>
+                        <div id="injects_container" class="extension_container"></div>
+                        <div id="accuweather_container" class="extension_container"></div>
                     </div>
                     <hr class="wide100p margin0">
                     <div class="alignitemscenter flex-container justifyCenter wide100p" style="justify-content: space-between;">
@@ -5101,7 +5108,8 @@
                         <div id="spoiler_free_desc" class="flex-container flexFlowColumn flex1 flexNoGap">
                             <div id="creators_notes_div" class="title_restorable">
                                 <span data-i18n="Creator's Notes">Creator's Notes</span>
-                                <div id="spoiler_free_desc_button" class="margin0 menu_button fa-solid fa-eye" title="Show / Hide Description and First Message" data-i18n="[title]Show / Hide Description and First Message"></div>
+                                <small id="creators_note_desc_hidden" data-i18n="Character details are hidden.">Character details are hidden.</small>
+                                <div id="spoiler_free_desc_button" class="margin0 menu_button fa-solid fa-eye fa-fw" title="Show / Hide Description and First Message" data-i18n="[title]Show / Hide Description and First Message"></div>
                             </div>
                             <div id="creator_notes_spoiler" class="flex1"></div>
                             <!-- A button to show / hide description_div and description_textarea and first_message_div and firstmessage_textarea-->
@@ -5439,7 +5447,7 @@
         </div>
         <div id="character_popup" class="flex-container flexFlowColumn flexNoGap">
             <div id="character_popup_text">
-                <h3 id="character_popup-button-h3" class="margin0"></h3> <span data-i18n="Advanced Defininitions">- Advanced
+                <h3 id="character_popup-button-h3" class="margin0"></h3> <span data-i18n="Advanced Definitions">- Advanced
                     Definitions</span>
             </div>
             <hr class="margin-bot-10px">
@@ -5729,7 +5737,7 @@
                             <span class="drag-handle">&#9776;</span>
                             <div class="gap5px world_entry_thin_controls wide100p alignitemscenter">
                                 <div class="inline-drawer-toggle fa-fw fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
-                                <div class="fa-solid fa-toggle-on killSwitch" name="entryKillSwitch" title="Toggle entry's active state."></div>
+                                <div class="fa-solid fa-toggle-on killSwitch" name="entryKillSwitch" data-i18n="[title]Toggle entry's active state." title="Toggle entry's active state."></div>
                                 <div class="flex-container alignitemscenter wide100p">
                                     <div class="WIEntryTitleAndStatus flex-container flex1 alignitemscenter">
                                         <div class="flex-container flex1">
@@ -5924,7 +5932,7 @@
                                     <div class="flex-container justifySpaceBetween">
                                         <small for="group">
                                             <span data-i18n="Inclusion Group">Inclusion Group</span>
-                                            <a href="https://docs.sillytavern.app/usage/worldinfo/#inclusion-group" class="notes-link" target="_blank" title="Inclusion Groups ensure only one entry from a group is activated at a time, if multiple are triggered.&#13;Supports multiple comma-separated groups.&#13;&#13;Documentation: World Info - Inclusion Group" data-i18n="[title]Inclusion Groups ensure only one entry from a group is activated at a time, if multiple are triggered.Documentation: World Info - Inclusion Group">
+                                            <a href="https://docs.sillytavern.app/usage/core-concepts/worldinfo/#inclusion-group" class="notes-link" target="_blank" title="Inclusion Groups ensure only one entry from a group is activated at a time, if multiple are triggered.&#13;Supports multiple comma-separated groups.&#13;&#13;Documentation: World Info - Inclusion Group" data-i18n="[title]Inclusion Groups ensure only one entry from a group is activated at a time, if multiple are triggered.Documentation: World Info - Inclusion Group">
                                                 <span class="fa-solid fa-circle-question note-link-span"></span>
                                             </a>
                                         </small>
@@ -5962,7 +5970,7 @@
                                         </small>
                                     </div>
                                     <div class="range-block-range">
-                                        <input class="text_pole margin0" name="sticky" type="number" placeholder="Non-sticky" min="0" max="999999">
+                                        <input class="text_pole margin0" name="sticky" type="number" data-i18n="[placeholder]Non-sticky" placeholder="Non-sticky" min="0" max="999999">
                                     </div>
                                 </div>
                                 <div class="flex2 flex-container flexFlowColumn flexNoGap" data-i18n="[title]Entries with a cooldown can't be activated N messages after being triggered." title="Entries with a cooldown can't be activated N messages after being triggered.">
@@ -5975,7 +5983,7 @@
                                         </small>
                                     </div>
                                     <div class="range-block-range">
-                                        <input class="text_pole margin0" name="cooldown" type="number" placeholder="No cooldown" min="0" max="999999">
+                                        <input class="text_pole margin0" name="cooldown" type="number" data-i18n="[placeholder]No cooldown" placeholder="No cooldown" min="0" max="999999">
                                     </div>
                                 </div>
                                 <div class="flex2 flex-container flexFlowColumn flexNoGap" data-i18n="[title]Entries with a delay can't be activated until there are N messages present in the chat." title="Entries with a delay can't be activated until there are N messages present in the chat.">
@@ -5988,7 +5996,7 @@
                                         </small>
                                     </div>
                                     <div class="range-block-range">
-                                        <input class="text_pole margin0" name="delay" type="number" placeholder="No delay" min="0" max="999999">
+                                        <input class="text_pole margin0" name="delay" type="number" data-i18n="[placeholder]No delay" placeholder="No delay" min="0" max="999999">
                                     </div>
                                 </div>
                             </div>

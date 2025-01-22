@@ -1313,9 +1313,7 @@ function applyTheme(name) {
             if (type) applyThemeColor(type);
             if (action) action();
         } else {
-            if (selector) { $(selector).attr('color', 'rgba(0,0,0,0)'); }
             console.debug(`Empty theme key: ${key}`);
-            power_user[key] = '';
         }
     }
 
@@ -2096,12 +2094,10 @@ export function sortEntitiesList(entities, forceSearch, filterHelper = null) {
     }
 
     entities.sort((a, b) => {
-        // Sort tags/folders will always be at the top
-        if (a.type === 'tag' && b.type !== 'tag') {
-            return -1;
-        }
-        if (a.type !== 'tag' && b.type === 'tag') {
-            return 1;
+        // Sort tags/folders will always be at the top. Their original sorting will be kept, to respect manual tag sorting.
+        if (a.type === 'tag' || b.type === 'tag') {
+            // The one that is a tag will be at the top
+            return (a.type === 'tag' ? -1 : 1) - (b.type === 'tag' ? -1 : 1);
         }
 
         // If we have search sorting, we take scores and use those
@@ -3965,6 +3961,95 @@ $(document).ready(() => {
             </ul>
         </div>
     `,
+    }));
+    SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+        name: 'css-var',
+        /** @param {{to: string, varname: string }} args @param {string} value @returns {string} */
+        callback: (args, value) => {
+            // Map enum to target selector
+            const targetSelector = {
+                chat: '#chat',
+                background: '#bg1',
+                gallery: '#gallery',
+                zoomedAvatar: 'div.zoomed_avatar',
+            }[args.to || 'chat'];
+
+            if (!targetSelector) {
+                toastr.error(`Invalid target: ${args.to}`);
+                return;
+            }
+
+            if (!args.varname) {
+                toastr.error('CSS variable name is required');
+                return;
+            }
+            if (!args.varname.startsWith('--')) {
+                toastr.error('CSS variable names must start with "--"');
+                return;
+            }
+
+            const elements = document.querySelectorAll(targetSelector);
+            if (elements.length === 0) {
+                toastr.error(`No elements found for ${args.to ?? 'chat'} with selector "${targetSelector}"`);
+                return;
+            }
+
+            elements.forEach(element => {
+                element.style.setProperty(args.varname, value);
+            });
+
+            console.info(`Set CSS variable "${args.varname}" to "${value}" on "${targetSelector}"`);
+        },
+        namedArgumentList: [
+            SlashCommandNamedArgument.fromProps({
+                name: 'varname',
+                description: 'CSS variable name (starting with double dashes)',
+                typeList: [ARGUMENT_TYPE.STRING],
+                isRequired: true,
+            }),
+            SlashCommandNamedArgument.fromProps({
+                name: 'to',
+                description: 'The target element to which the CSS variable will be applied',
+                typeList: [ARGUMENT_TYPE.STRING],
+                enumList: [
+                    new SlashCommandEnumValue('chat', null, enumTypes.enum, enumIcons.message),
+                    new SlashCommandEnumValue('background', null, enumTypes.enum, enumIcons.image),
+                    new SlashCommandEnumValue('zoomedAvatar', null, enumTypes.enum, enumIcons.character),
+                    new SlashCommandEnumValue('gallery', null, enumTypes.enum, enumIcons.image),
+                ],
+                defaultValue: 'chat',
+            }),
+        ],
+        unnamedArgumentList: [
+            SlashCommandArgument.fromProps({
+                description: 'CSS variable value',
+                typeList: [ARGUMENT_TYPE.STRING],
+                isRequired: true,
+            }),
+        ],
+        helpString: `
+            <div>
+                Sets a CSS variable to a specified value on a target element.
+                <br />
+                Only setting of variable names is supported. They have to be prefixed with double dashes ("--exampleVar").
+                Setting actual CSS properties is not supported. Custom CSS in the theme settings can be used for that.
+                <br /><br />
+                <b>This value will be gone after a page reload!</b>
+            </div>
+            <div>
+                <strong>Example:</strong>
+                <ul>
+                    <li>
+                        <pre><code>/css-var varname="--SmartThemeBodyColor" #ff0000</code></pre>
+                        Sets the text color of the chat to red
+                    </li>
+                    <li>
+                        <pre><code>/css-var to=zoomedAvatar varname="--SmartThemeBlurStrength" 0</code></pre>
+                        Remove the blur from the zoomed avatar
+                    </li>
+                </ul>
+            </div>
+        `,
     }));
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'movingui',

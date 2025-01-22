@@ -892,7 +892,7 @@ async function setDefaultPersona(e) {
         }
         delete power_user.default_persona;
     } else {
-        const confirm = await Popup.show.confirm(t`Are you sure you want to set "${personaName}" as the default persona?`, t`This name and avatar will be used for all new chats, as well as existing chats where the user persona is not locked.`);
+        const confirm = await Popup.show.confirm(t`Are you sure you want to set \"${personaName}\" as the default persona?`, t`This name and avatar will be used for all new chats, as well as existing chats where the user persona is not locked.`);
 
         if (!confirm) {
             console.debug('User cancelled setting default persona');

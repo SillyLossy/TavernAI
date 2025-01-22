@@ -79,7 +79,7 @@ router.post('/generate', jsonParser, async (req, res) => {
             return res.sendStatus(500);
         }
 
-        const audio = await response.buffer();
+        const audio = Buffer.from(await response.arrayBuffer());
         res.set('Content-Type', 'audio/ogg');
         return res.send(audio);
     } catch (error) {

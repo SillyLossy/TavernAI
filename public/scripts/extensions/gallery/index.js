@@ -277,7 +277,7 @@ function makeMovable(id = 'gallery') {
     const newElement = $(template);
     newElement.css('background-color', 'var(--SmartThemeBlurTintColor)');
     newElement.attr('forChar', id);
-    newElement.attr('id', `${id}`);
+    newElement.attr('id', id);
     newElement.find('.drag-grabber').attr('id', `${id}header`);
     newElement.find('.dragTitle').text('Image Gallery');
     //add a div for the gallery

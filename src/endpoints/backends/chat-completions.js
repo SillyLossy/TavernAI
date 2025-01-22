@@ -308,14 +308,20 @@ async function sendMakerSuiteRequest(request, response) {
         ) && request.body.use_makersuite_sysprompt;
 
         const prompt = convertGooglePrompt(request.body.messages, model, should_use_system_prompt, getPromptNames(request));
+        let safetySettings = GEMINI_SAFETY;
+
+        if (model.includes('gemini-2.0-flash-exp')) {
+            safetySettings = GEMINI_SAFETY.map(setting => ({ ...setting, threshold: 'OFF' }));
+        }
+
         let body = {
             contents: prompt.contents,
-            safetySettings: GEMINI_SAFETY,
+            safetySettings: safetySettings,
             generationConfig: generationConfig,
         };
 
         if (should_use_system_prompt) {
-            body.system_instruction = prompt.system_instruction;
+            body.systemInstruction = prompt.system_instruction;
         }
 
         return body;

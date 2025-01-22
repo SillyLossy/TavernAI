@@ -585,10 +585,12 @@ async function enlargeMessageImage() {
     const imgHolder = document.createElement('div');
     imgHolder.classList.add('img_enlarged_holder');
     imgHolder.append(img);
-    const imgContainer = $('<div><pre><code></code></pre></div>');
+    const imgContainer = $('<div><pre><code class="img_enlarged_title"></code></pre></div>');
     imgContainer.prepend(imgHolder);
     imgContainer.addClass('img_enlarged_container');
-    imgContainer.find('code').addClass('txt').text(title);
+
+    const codeTitle = imgContainer.find('.img_enlarged_title');
+    codeTitle.addClass('txt').text(title);
     const titleEmpty = !title || title.trim().length === 0;
     imgContainer.find('pre').toggle(!titleEmpty);
     addCopyToCodeBlocks(imgContainer);
@@ -598,9 +600,17 @@ async function enlargeMessageImage() {
     popup.dlg.style.width = 'unset';
     popup.dlg.style.height = 'unset';
 
-    img.addEventListener('click', () => {
+    img.addEventListener('click', event => {
         const shouldZoom = !img.classList.contains('zoomed');
         img.classList.toggle('zoomed', shouldZoom);
+        event.stopPropagation();
+    });
+    codeTitle[0]?.addEventListener('click', event => {
+        event.stopPropagation();
+    });
+
+    popup.dlg.addEventListener('click', event => {
+        popup.completeCancelled();
     });
 
     await popup.show();

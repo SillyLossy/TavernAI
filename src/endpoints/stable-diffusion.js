@@ -681,8 +681,8 @@ together.post('/generate', jsonParser, async (request, response) => {
         let b64_json = choice.b64_json;
 
         if (!b64_json) {
-            const buffer = await (await fetch(choice.url)).buffer();
-            b64_json = buffer.toString('base64');
+            const buffer = await (await fetch(choice.url)).arrayBuffer();
+            b64_json = Buffer.from(buffer).toString('base64');
         }
 
         return response.send({ format: 'jpg', data: b64_json });
@@ -838,8 +838,8 @@ pollinations.post('/generate', jsonParser, async (request, response) => {
             throw new Error('Pollinations request failed.');
         }
 
-        const buffer = await result.buffer();
-        const base64 = buffer.toString('base64');
+        const buffer = await result.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
 
         return response.send({ image: base64 });
     } catch (error) {
@@ -900,8 +900,8 @@ stability.post('/generate', jsonParser, async (request, response) => {
             return response.sendStatus(500);
         }
 
-        const buffer = await result.buffer();
-        return response.send(buffer.toString('base64'));
+        const buffer = await result.arrayBuffer();
+        return response.send(Buffer.from(buffer).toString('base64'));
     } catch (error) {
         console.log(error);
         return response.sendStatus(500);
@@ -1020,9 +1020,9 @@ huggingface.post('/generate', jsonParser, async (request, response) => {
             return response.sendStatus(500);
         }
 
-        const buffer = await result.buffer();
+        const buffer = await result.arrayBuffer();
         return response.send({
-            image: buffer.toString('base64'),
+            image: Buffer.from(buffer).toString('base64'),
         });
     } catch (error) {
         console.log(error);

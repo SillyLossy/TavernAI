@@ -879,7 +879,7 @@
     "popup-button-no": "لا",
     "popup-button-cancel": "يلغي",
     "popup-button-import": "يستورد",
-    "Advanced Defininitions": "تعريفات متقدمة",
+    "Advanced Definitions": "تعريفات متقدمة",
     "Prompt Overrides": "التجاوزات السريعة",
     "(For Chat Completion and Instruct Mode)": "(لاستكمال الدردشة ووضع التعليمات)",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "أدخل {{original}} في أي مربع لتضمين التعليمات الافتراضية المعنية من إعدادات النظام.",

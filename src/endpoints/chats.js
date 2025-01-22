@@ -18,9 +18,9 @@ import {
     formatBytes,
 } from '../util.js';
 
-const isBackupDisabled = getConfigValue('disableChatBackup', false);
-const maxTotalChatBackups = Number(getConfigValue('maxTotalChatBackups', -1));
-const throttleInterval = getConfigValue('chatBackupThrottleInterval', 10_000);
+const isBackupEnabled = !!getConfigValue('backups.chat.enabled', true);
+const maxTotalChatBackups = Number(getConfigValue('backups.chat.maxTotalBackups', -1));
+const throttleInterval = Number(getConfigValue('backups.chat.throttleInterval', 10_000));
 
 /**
  * Saves a chat to the backups directory.
@@ -31,7 +31,7 @@ const throttleInterval = getConfigValue('chatBackupThrottleInterval', 10_000);
 function backupChat(directory, name, chat) {
     try {
 
-        if (isBackupDisabled) {
+        if (!isBackupEnabled) {
             return;
         }
 
@@ -264,6 +264,34 @@ function flattenChubChat(userName, characterName, lines) {
     return (lines ?? []).map(convert).join('\n');
 }
 
+/**
+ * Imports a chat from RisuAI format.
+ * @param {string} userName User name
+ * @param {string} characterName Character name
+ * @param {object} jsonData Imported chat data
+ * @returns {string} Chat data
+ */
+function importRisuChat(userName, characterName, jsonData) {
+    /** @type {object[]} */
+    const chat = [{
+        user_name: userName,
+        character_name: characterName,
+        create_date: humanizedISO8601DateTime(),
+    }];
+
+    for (const message of jsonData.data.message) {
+        const isUser = message.role === 'user';
+        chat.push({
+            name: message.name ?? (isUser ? userName : characterName),
+            is_user: isUser,
+            send_date: Number(message.time ?? Date.now()),
+            mes: message.data ?? '',
+        });
+    }
+
+    return chat.map(obj => JSON.stringify(obj)).join('\n');
+}
+
 export const router = express.Router();
 
 router.post('/save', jsonParser, function (request, response) {
@@ -481,6 +509,8 @@ router.post('/import', urlencodedParser, function (request, response) {
                 importFunc = importOobaChat;
             } else if (Array.isArray(jsonData.messages)) { // Agnai's format
                 importFunc = importAgnaiChat;
+            } else if (jsonData.type === 'risuChat') { // RisuAI format
+                importFunc = importRisuChat;
             } else { // Unknown format
                 console.log('Incorrect chat format .json');
                 return response.send({ error: true });

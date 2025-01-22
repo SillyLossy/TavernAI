@@ -1,14 +1,15 @@
 {
     "compilerOptions": {
         "module": "ESNext",
-        "target": "ESNext",
+        "target": "ES2023",
         "moduleResolution": "Node",
         "strictNullChecks": true,
         "strictFunctionTypes": true,
         "checkJs": true,
         "allowUmdGlobalAccess": true,
         "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "strictBindCallApply": true
     },
     "exclude": [
         "**/node_modules/**",

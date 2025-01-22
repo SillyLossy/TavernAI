@@ -186,6 +186,12 @@
             </label>
 
             <div id="vectors_files_settings" class="marginTopBot5">
+                <label class="checkbox_label" for="vectors_only_custom_boundary" title="Create a chunk for every custom Chunk boundary detected in the file text. Don't chunk on default boundaries.">
+                    <input id="vectors_only_custom_boundary" type="checkbox" class="checkbox">
+                    <span data-i18n="Only chunk on custom boundary">
+                        Only chunk on custom boundary
+                    </span>
+                </label>
                 <label class="checkbox_label" for="vectors_translate_files" title="This can help with retrieval accuracy if using embedding models that are trained on English data. Uses the selected API from Chat Translation extension settings.">
                     <input id="vectors_translate_files" type="checkbox" class="checkbox">
                     <span data-i18n="Translate files into English before processing">

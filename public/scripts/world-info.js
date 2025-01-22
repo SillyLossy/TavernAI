@@ -20,6 +20,7 @@ import { SlashCommandClosure } from './slash-commands/SlashCommandClosure.js';
 import { callGenericPopup, Popup, POPUP_TYPE } from './popup.js';
 import { StructuredCloneMap } from './util/StructuredCloneMap.js';
 import { renderTemplateAsync } from './templates.js';
+import { t } from './i18n.js';
 
 export const world_info_insertion_strategy = {
     evenly: 0,
@@ -909,21 +910,21 @@ function registerWorldInfoSlashCommands() {
 
     async function getEntriesFromFile(file) {
         if (!file || !world_names.includes(file)) {
-            toastr.warning('Valid World Info file name is required');
+            toastr.warning(t`Valid World Info file name is required`);
             return '';
         }
 
         const data = await loadWorldInfo(file);
 
         if (!data || !('entries' in data)) {
-            toastr.warning('World Info file has an invalid format');
+            toastr.warning(t`World Info file has an invalid format`);
             return '';
         }
 
         const entries = Object.values(data.entries);
 
         if (!entries || entries.length === 0) {
-            toastr.warning('World Info file has no entries');
+            toastr.warning(t`World Info file has no entries`);
             return '';
         }
 
@@ -951,7 +952,7 @@ function registerWorldInfoSlashCommands() {
         name = String(name ?? '') || context.characters[context.characterId]?.avatar || null;
         const character = findChar({ name });
         if (!character) {
-            toastr.error('Character not found.');
+            toastr.error(t`Character not found.`);
             return '';
         }
         const books = [];
@@ -977,7 +978,7 @@ function registerWorldInfoSlashCommands() {
         const chatId = getCurrentChatId();
 
         if (!chatId) {
-            toastr.warning('Open a chat to get a name of the chat-bound lorebook');
+            toastr.warning(t`Open a chat to get a name of the chat-bound lorebook`);
             return '';
         }
 
@@ -4773,7 +4774,7 @@ export async function importEmbeddedWorldInfo(skipPopup = false) {
     const bookName = characters[chid]?.data?.character_book?.name || `${characters[chid]?.name}'s Lorebook`;
 
     if (!skipPopup) {
-        const confirmation = await Popup.show.confirm(`Are you sure you want to import "${bookName}"?`, world_names.includes(bookName) ? 'It will overwrite the World/Lorebook with the same name.' : '');
+        const confirmation = await Popup.show.confirm(t`Are you sure you want to import '${bookName}'?`, world_names.includes(bookName) ? t`It will overwrite the World/Lorebook with the same name.` : '');
         if (!confirmation) {
             return;
         }
@@ -4785,7 +4786,7 @@ export async function importEmbeddedWorldInfo(skipPopup = false) {
     await updateWorldInfoList();
     $('#character_world').val(bookName).trigger('change');
 
-    toastr.success(`The world "${bookName}" has been imported and linked to the character successfully.`, 'World/Lorebook imported');
+    toastr.success(t`The world '${bookName}' has been imported and linked to the character successfully.`, t`World/Lorebook imported`);
 
     const newIndex = world_names.indexOf(bookName);
     if (newIndex >= 0) {
@@ -4813,9 +4814,9 @@ export function onWorldInfoChange(args, text) {
                             if (selected_world_info.includes(name)) {
                                 selected_world_info.splice(selected_world_info.indexOf(name), 1);
                                 wiElement.prop('selected', false);
-                                if (!silent) toastr.success(`Deactivated world: ${name}`);
+                                if (!silent) toastr.success(t`Deactivated world: ${name}`);
                             } else {
-                                if (!silent) toastr.error(`World was not active: ${name}`);
+                                if (!silent) toastr.error(t`World was not active: ${name}`);
                             }
                             break;
                         }
@@ -4823,11 +4824,11 @@ export function onWorldInfoChange(args, text) {
                             if (selected_world_info.includes(name)) {
                                 selected_world_info.splice(selected_world_info.indexOf(name), 1);
                                 wiElement.prop('selected', false);
-                                if (!silent) toastr.success(`Deactivated world: ${name}`);
+                                if (!silent) toastr.success(t`Deactivated world: ${name}`);
                             } else {
                                 selected_world_info.push(name);
                                 wiElement.prop('selected', true);
-                                if (!silent) toastr.success(`Activated world: ${name}`);
+                                if (!silent) toastr.success(t`Activated world: ${name}`);
                             }
                             break;
                         }
@@ -4835,16 +4836,16 @@ export function onWorldInfoChange(args, text) {
                         default: {
                             selected_world_info.push(name);
                             wiElement.prop('selected', true);
-                            if (!silent) toastr.success(`Activated world: ${name}`);
+                            if (!silent) toastr.success(t`Activated world: ${name}`);
                         }
                     }
                 } else {
-                    if (!silent) toastr.error(`No world found named: ${worldName}`);
+                    if (!silent) toastr.error(t`No world found named: ${worldName}`);
                 }
             });
             $('#world_info').trigger('change');
         } else { // if no args, unset all worlds
-            if (!silent) toastr.success('Deactivated all worlds');
+            if (!silent) toastr.success(t`Deactivated all worlds`);
             selected_world_info = [];
             $('#world_info').val(null).trigger('change');
         }
@@ -4860,7 +4861,7 @@ export function onWorldInfoChange(args, text) {
                 } else {
                     const wiElement = getWIElement(existingWorldName);
                     wiElement.prop('selected', false);
-                    toastr.error(`The world with ${existingWorldName} is invalid or corrupted.`);
+                    toastr.error(t`The world with ${existingWorldName} is invalid or corrupted.`);
                 }
             });
         }
@@ -4892,7 +4893,7 @@ export async function importWorldInfo(file) {
         }
 
         if (jsonData === undefined || jsonData === null) {
-            toastr.error(`File is not valid: ${file.name}`);
+            toastr.error(t`File is not valid: ${file.name}`);
             return;
         }
 
@@ -5038,7 +5039,7 @@ jQuery(() => {
 
     $('#world_create_button').on('click', async () => {
         const tempName = getFreeWorldName();
-        const finalName = await Popup.show.input('Create a new World Info', 'Enter a name for the new file:', tempName);
+        const finalName = await Popup.show.input(t`Create a new World Info`, t`Enter a name for the new file:`, tempName);
 
         if (finalName) {
             await createNewWorldInfo(finalName, { interactive: true });

@@ -879,7 +879,7 @@
     "popup-button-no": "NEIN",
     "popup-button-cancel": "Stornieren",
     "popup-button-import": "Importieren",
-    "Advanced Defininitions": "Erweiterte Definitionen",
+    "Advanced Definitions": "Erweiterte Definitionen",
     "Prompt Overrides": "Eingabeaufforderungsüberschreibungen",
     "(For Chat Completion and Instruct Mode)": "(Für Chat-Abschluss und Anweisungsmodus)",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "Füge {{original}} in eines der Felder ein, um den jeweiligen Standardprompt aus den Systemeinstellungen einzuschließen.",

@@ -879,7 +879,7 @@
     "popup-button-no": "KHÔNG",
     "popup-button-cancel": "Hủy",
     "popup-button-import": "Nhập",
-    "Advanced Defininitions": "Các Định nghĩa Nâng cao",
+    "Advanced Definitions": "Các Định nghĩa Nâng cao",
     "Prompt Overrides": "Ghi đè Prompt",
     "(For Chat Completion and Instruct Mode)": "(Đối với chế độ hoàn thành trò chuyện và hướng dẫn)",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "Chèn {{original}} vào bất kỳ hộp nào để bao gồm Prompt mặc định tương ứng từ cài đặt hệ thống.",

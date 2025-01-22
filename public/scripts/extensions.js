@@ -4,7 +4,7 @@ import { eventSource, event_types, saveSettings, saveSettingsDebounced, getReque
 import { showLoader } from './loader.js';
 import { POPUP_RESULT, POPUP_TYPE, Popup, callGenericPopup } from './popup.js';
 import { renderTemplate, renderTemplateAsync } from './templates.js';
-import { delay, isSubsetOf, setValueByPath } from './utils.js';
+import { delay, isSubsetOf, sanitizeSelector, setValueByPath } from './utils.js';
 import { getContext } from './st-context.js';
 import { isAdmin } from './user.js';
 import { t } from './i18n.js';
@@ -38,7 +38,8 @@ export let modules = [];
 let activeExtensions = new Set();
 
 const getApiUrl = () => extension_settings.apiUrl;
-const sortManifests = (a, b) => parseInt(a.loading_order) - parseInt(b.loading_order) || String(a.display_name).localeCompare(String(b.display_name));
+const sortManifestsByOrder = (a, b) => parseInt(a.loading_order) - parseInt(b.loading_order) || String(a.display_name).localeCompare(String(b.display_name));
+const sortManifestsByName = (a, b) => String(a.display_name).localeCompare(String(b.display_name)) || parseInt(a.loading_order) - parseInt(b.loading_order);
 let connectedToApi = false;
 
 /**
@@ -355,7 +356,7 @@ async function getManifests(names) {
  * @returns {Promise<void>}
  */
 async function activateExtensions() {
-    const extensions = Object.entries(manifests).sort((a, b) => sortManifests(a[1], b[1]));
+    const extensions = Object.entries(manifests).sort((a, b) => sortManifestsByOrder(a[1], b[1]));
     const promises = [];
 
     for (let entry of extensions) {
@@ -509,10 +510,11 @@ function addExtensionStyle(name, manifest) {
 
     return new Promise((resolve, reject) => {
         const url = `/scripts/extensions/${name}/${manifest.css}`;
+        const id = sanitizeSelector(`${name}-css`);
 
-        if ($(`link[id="${name}"]`).length === 0) {
+        if ($(`link[id="${id}"]`).length === 0) {
             const link = document.createElement('link');
-            link.id = name;
+            link.id = id;
             link.rel = 'stylesheet';
             link.type = 'text/css';
             link.href = url;
@@ -540,11 +542,12 @@ function addExtensionScript(name, manifest) {
 
     return new Promise((resolve, reject) => {
         const url = `/scripts/extensions/${name}/${manifest.js}`;
+        const id = sanitizeSelector(`${name}-js`);
         let ready = false;
 
-        if ($(`script[id="${name}"]`).length === 0) {
+        if ($(`script[id="${id}"]`).length === 0) {
             const script = document.createElement('script');
-            script.id = name;
+            script.id = id;
             script.type = 'module';
             script.src = url;
             script.async = true;
@@ -680,9 +683,9 @@ function getExtensionData(extension) {
  * @return {string} - The HTML string for the module information.
  */
 function getModuleInformation() {
-    let moduleInfo = modules.length ? `<p>${DOMPurify.sanitize(modules.join(', '))}</p>` : '<p class="failure">Not connected to the API!</p>';
+    let moduleInfo = modules.length ? `<p>${DOMPurify.sanitize(modules.join(', '))}</p>` : '<p class="failure">' + t`Not connected to the API!` + '</p>';
     return `
-        <h3>Modules provided by your Extras API:</h3>
+        <h3>` + t`Modules provided by your Extras API:` + `</h3>
         ${moduleInfo}
     `;
 }
@@ -701,16 +704,19 @@ async function showExtensionsDetails() {
             initialScrollTop = oldPopup.content.scrollTop;
             await oldPopup.completeCancelled();
         }
-        const htmlDefault = $('<div class="marginBot10"><h3 class="textAlignCenter">Built-in Extensions:</h3></div>');
-        const htmlExternal = $('<div class="marginBot10"><h3 class="textAlignCenter">Installed Extensions:</h3></div>');
+        const htmlDefault = $('<div class="marginBot10"><h3 class="textAlignCenter">' + t`Built-in Extensions:` + '</h3></div>');
+        const htmlExternal = $('<div class="marginBot10"><h3 class="textAlignCenter">' + t`Installed Extensions:` + '</h3></div>');
         const htmlLoading = $(`<div class="flex-container alignItemsCenter justifyCenter marginTop10 marginBot5">
             <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Loading third-party extensions... Please wait...</span>
+            <span>` + t`Loading third-party extensions... Please wait...` + `</span>
         </div>`);
 
         htmlExternal.append(htmlLoading);
 
-        const extensions = Object.entries(manifests).sort((a, b) => sortManifests(a[1], b[1])).map(getExtensionData);
+        const sortOrderKey = 'extensions_sortByName';
+        const sortByName = localStorage.getItem(sortOrderKey) === 'true';
+        const sortFn = sortByName ? sortManifestsByName : sortManifestsByOrder;
+        const extensions = Object.entries(manifests).sort((a, b) => sortFn(a[1], b[1])).map(getExtensionData);
 
         extensions.forEach(value => {
             const { isExternal, extensionHtml } = value;
@@ -726,8 +732,7 @@ async function showExtensionsDetails() {
 
         /** @type {import('./popup.js').CustomPopupButton} */
         const updateAllButton = {
-            text: 'Update all',
-            appendAtEnd: true,
+            text: t`Update all`,
             action: async () => {
                 requiresReload = true;
                 await autoUpdateExtensions(true);
@@ -735,13 +740,23 @@ async function showExtensionsDetails() {
             },
         };
 
+        /** @type {import('./popup.js').CustomPopupButton} */
+        const sortOrderButton = {
+            text: sortByName ? t`Sort: Display Name` : t`Sort: Loading Order`,
+            action: async () => {
+                abortController.abort();
+                localStorage.setItem(sortOrderKey, sortByName ? 'false' : 'true');
+                await showExtensionsDetails();
+            },
+        };
+
         let waitingForSave = false;
 
         const popup = new Popup(html, POPUP_TYPE.TEXT, '', {
-            okButton: 'Close',
+            okButton: t`Close`,
             wide: true,
             large: true,
-            customButtons: [updateAllButton],
+            customButtons: [sortOrderButton, updateAllButton],
             allowVerticalScrolling: true,
             onClosing: async () => {
                 if (waitingForSave) {
@@ -760,7 +775,7 @@ async function showExtensionsDetails() {
         });
         popupPromise = popup.show();
         popup.content.scrollTop = initialScrollTop;
-        checkForUpdatesManual(abortController.signal).finally(() => htmlLoading.remove());
+        checkForUpdatesManual(sortFn, abortController.signal).finally(() => htmlLoading.remove());
     } catch (error) {
         toastr.error(t`Error loading extensions. See browser console for details.`);
         console.error(error);
@@ -831,7 +846,7 @@ async function updateExtension(extensionName, quiet) {
                 toastr.success('Extension is already up to date');
             }
         } else {
-            toastr.success(`Extension ${extensionName} updated to ${data.shortCommitHash}`, 'Reload the page to apply updates');
+            toastr.success(t`Extension ${extensionName} updated to ${data.shortCommitHash}`, t`Reload the page to apply updates`);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -999,7 +1014,7 @@ export async function installExtension(url, global) {
     }
 
     const response = await request.json();
-    toastr.success(`Extension "${response.display_name}" by ${response.author} (version ${response.version}) has been installed successfully!`, 'Extension installation successful');
+    toastr.success(t`Extension '${response.display_name}' by ${response.author} (version ${response.version}) has been installed successfully!`, t`Extension installation successful`);
     console.debug(`Extension "${response.display_name}" has been installed successfully at ${response.extensionPath}`);
     await loadExtensionSettings({}, false, false);
     await eventSource.emit(event_types.EXTENSION_SETTINGS_LOADED);
@@ -1071,12 +1086,13 @@ function processVersionCheckQueue() {
 
 /**
  * Performs a manual check for updates on all 3rd-party extensions.
+ * @param {function} sortFn Sort function
  * @param {AbortSignal} abortSignal Signal to abort the operation
  * @returns {Promise<any[]>}
  */
-async function checkForUpdatesManual(abortSignal) {
+async function checkForUpdatesManual(sortFn, abortSignal) {
     const promises = [];
-    for (const id of Object.keys(manifests).filter(x => x.startsWith('third-party')).sort((a, b) => sortManifests(manifests[a], manifests[b]))) {
+    for (const id of Object.keys(manifests).filter(x => x.startsWith('third-party')).sort((a, b) => sortFn(manifests[a], manifests[b]))) {
         const externalId = id.replace('third-party', '');
         const promise = enqueueVersionCheck(async () => {
             try {
@@ -1173,7 +1189,7 @@ async function checkForExtensionUpdates(force) {
     await Promise.allSettled(promises);
 
     if (updatesAvailable.length > 0) {
-        toastr.info(`${updatesAvailable.map(x => `• ${x}`).join('\n')}`, 'Extension updates available');
+        toastr.info(`${updatesAvailable.map(x => `• ${x}`).join('\n')}`, t`Extension updates available`);
     }
 }
 
@@ -1187,7 +1203,7 @@ async function autoUpdateExtensions(forceAll) {
         return;
     }
 
-    const banner = toastr.info('Auto-updating extensions. This may take several minutes.', 'Please wait...', { timeOut: 10000, extendedTimeOut: 10000 });
+    const banner = toastr.info(t`Auto-updating extensions. This may take several minutes.`, t`Please wait...`, { timeOut: 10000, extendedTimeOut: 10000 });
     const isCurrentUserAdmin = isAdmin();
     const promises = [];
     for (const [id, manifest] of Object.entries(manifests)) {
@@ -1209,9 +1225,10 @@ async function autoUpdateExtensions(forceAll) {
  * Runs the generate interceptors for all extensions.
  * @param {any[]} chat Chat array
  * @param {number} contextSize Context size
+ * @param {string} type Generation type
  * @returns {Promise<boolean>} True if generation should be aborted
  */
-export async function runGenerationInterceptors(chat, contextSize) {
+export async function runGenerationInterceptors(chat, contextSize, type) {
     let aborted = false;
     let exitImmediately = false;
 
@@ -1220,11 +1237,11 @@ export async function runGenerationInterceptors(chat, contextSize) {
         exitImmediately = immediately;
     };
 
-    for (const manifest of Object.values(manifests).filter(x => x.generate_interceptor).sort((a, b) => sortManifests(a, b))) {
+    for (const manifest of Object.values(manifests).filter(x => x.generate_interceptor).sort((a, b) => sortManifestsByOrder(a, b))) {
         const interceptorKey = manifest.generate_interceptor;
         if (typeof globalThis[interceptorKey] === 'function') {
             try {
-                await globalThis[interceptorKey](chat, contextSize, abort);
+                await globalThis[interceptorKey](chat, contextSize, abort, type);
             } catch (e) {
                 console.error(`Failed running interceptor for ${manifest.display_name}`, e);
             }

@@ -325,6 +325,12 @@ export function getTokenizerBestMatch(forApi) {
             if (model.includes('gemma')) {
                 return tokenizers.GEMMA;
             }
+            if (model.includes('nemo') || model.includes('pixtral')) {
+                return tokenizers.NEMO;
+            }
+            if (model.includes('deepseek')) {
+                return tokenizers.DEEPSEEK;
+            }
             if (model.includes('yi')) {
                 return tokenizers.YI;
             }
@@ -427,6 +433,7 @@ export async function getTokenCountAsync(str, padding = undefined) {
     }
 
     let tokenizerType = power_user.tokenizer;
+    let modelHash = '';
 
     if (main_api === 'openai') {
         if (padding === power_user.token_padding) {
@@ -442,13 +449,17 @@ export async function getTokenCountAsync(str, padding = undefined) {
         tokenizerType = getTokenizerBestMatch(main_api);
     }
 
+    if (tokenizerType === tokenizers.API_TEXTGENERATIONWEBUI) {
+        modelHash = getStringHash(getTextGenModel() || online_status).toString();
+    }
+
     if (padding === undefined) {
         padding = 0;
     }
 
     const cacheObject = getTokenCacheObject();
     const hash = getStringHash(str);
-    const cacheKey = `${tokenizerType}-${hash}+${padding}`;
+    const cacheKey = `${tokenizerType}-${hash}${modelHash}+${padding}`;
 
     if (typeof cacheObject[cacheKey] === 'number') {
         return cacheObject[cacheKey];
@@ -478,6 +489,7 @@ export function getTokenCount(str, padding = undefined) {
     }
 
     let tokenizerType = power_user.tokenizer;
+    let modelHash = '';
 
     if (main_api === 'openai') {
         if (padding === power_user.token_padding) {
@@ -493,13 +505,17 @@ export function getTokenCount(str, padding = undefined) {
         tokenizerType = getTokenizerBestMatch(main_api);
     }
 
+    if (tokenizerType === tokenizers.API_TEXTGENERATIONWEBUI) {
+        modelHash = getStringHash(getTextGenModel() || online_status).toString();
+    }
+
     if (padding === undefined) {
         padding = 0;
     }
 
     const cacheObject = getTokenCacheObject();
     const hash = getStringHash(str);
-    const cacheKey = `${tokenizerType}-${hash}+${padding}`;
+    const cacheKey = `${tokenizerType}-${hash}${modelHash}+${padding}`;
 
     if (typeof cacheObject[cacheKey] === 'number') {
         return cacheObject[cacheKey];

@@ -4,6 +4,8 @@ import express from 'express';
 import { decode } from 'html-entities';
 import { readSecret, SECRET_KEYS } from './secrets.js';
 import { jsonParser } from '../express-common.js';
+import { trimV1 } from '../util.js';
+import { setAdditionalHeaders } from '../additional-headers.js';
 
 export const router = express.Router();
 
@@ -253,6 +255,41 @@ router.post('/tavily', jsonParser, async (request, response) => {
         return response.json(data);
     } catch (error) {
         console.log(error);
+        return response.sendStatus(500);
+    }
+});
+
+router.post('/koboldcpp', jsonParser, async (request, response) => {
+    try {
+        const { query, url } = request.body;
+
+        if (!url) {
+            console.error('No URL provided for KoboldCpp search');
+            return response.sendStatus(400);
+        }
+
+        console.debug('KoboldCpp search query', query);
+
+        const baseUrl = trimV1(url);
+        const args = {
+            method: 'POST',
+            headers: {},
+            body: JSON.stringify({ q: query }),
+        };
+
+        setAdditionalHeaders(request, args, baseUrl);
+        const result = await fetch(`${baseUrl}/api/extra/websearch`, args);
+
+        if (!result.ok) {
+            const text = await result.text();
+            console.error('KoboldCpp request failed', result.statusText, text);
+            return response.status(500).send(text);
+        }
+
+        const data = await result.json();
+        return response.json(data);
+    } catch (error) {
+        console.error(error);
         return response.sendStatus(500);
     }
 });

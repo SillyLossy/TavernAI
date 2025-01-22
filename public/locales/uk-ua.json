@@ -879,7 +879,7 @@
     "popup-button-no": "Немає",
     "popup-button-cancel": "Скасувати",
     "popup-button-import": "Імпорт",
-    "Advanced Defininitions": "Розширені визначення",
+    "Advanced Definitions": "Розширені визначення",
     "Prompt Overrides": "Перевизначення підказок",
     "(For Chat Completion and Instruct Mode)": "(Для завершення чату та режиму інструктажу)",
     "Insert {{original}} into either box to include the respective default prompt from system settings.": "Вставте {{original}} в будь-яке поле, щоб включити відповідний запит з налаштувань системи.",

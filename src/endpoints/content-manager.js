@@ -336,7 +336,7 @@ async function downloadChubLorebook(id) {
     }
 
     const name = id.split('/').pop();
-    const buffer = await result.buffer();
+    const buffer = Buffer.from(await result.arrayBuffer());
     const fileName = `${sanitize(name)}.json`;
     const fileType = result.headers.get('content-type');
 
@@ -359,7 +359,7 @@ async function downloadChubCharacter(id) {
         throw new Error('Failed to download character');
     }
 
-    const buffer = await result.buffer();
+    const buffer = Buffer.from(await result.arrayBuffer());
     const fileName = result.headers.get('content-disposition')?.split('filename=')[1] || `${sanitize(id)}.png`;
     const fileType = result.headers.get('content-type');
 
@@ -398,7 +398,7 @@ async function downloadPygmalionCharacter(id) {
         }
 
         const avatarResult = await fetch(avatarUrl);
-        const avatarBuffer = await avatarResult.buffer();
+        const avatarBuffer = Buffer.from(await avatarResult.arrayBuffer());
 
         const cardBuffer = write(avatarBuffer, JSON.stringify(characterData));
 
@@ -477,7 +477,7 @@ async function downloadJannyCharacter(uuid) {
         const downloadResult = await result.json();
         if (downloadResult.status === 'ok') {
             const imageResult = await fetch(downloadResult.downloadUrl);
-            const buffer = await imageResult.buffer();
+            const buffer = Buffer.from(await imageResult.arrayBuffer());
             const fileName = `${sanitize(uuid)}.png`;
             const fileType = imageResult.headers.get('content-type');
 
@@ -499,7 +499,7 @@ async function downloadAICCCharacter(id) {
         }
 
         const contentType = response.headers.get('content-type') || 'image/png'; // Default to 'image/png' if header is missing
-        const buffer = await response.buffer();
+        const buffer = Buffer.from(await response.arrayBuffer());
         const fileName = `${sanitize(id)}.png`; // Assuming PNG, but adjust based on actual content or headers
 
         return {
@@ -537,7 +537,7 @@ async function downloadGenericPng(url) {
         const result = await fetch(url);
 
         if (result.ok) {
-            const buffer = await result.buffer();
+            const buffer = Buffer.from(await result.arrayBuffer());
             const fileName = sanitize(result.url.split('?')[0].split('/').reverse()[0]);
             const contentType = result.headers.get('content-type') || 'image/png'; //yoink it from AICC function lol
 
@@ -581,7 +581,7 @@ async function downloadRisuCharacter(uuid) {
         throw new Error('Failed to download character');
     }
 
-    const buffer = await result.buffer();
+    const buffer = Buffer.from(await result.arrayBuffer());
     const fileName = `${sanitize(uuid)}.png`;
     const fileType = 'image/png';
 

@@ -27,6 +27,11 @@ RUN \
   ln -s "./config/config.yaml" "config.yaml" || true && \
   mkdir "config" || true
 
+# Pre-compile public libraries
+RUN \
+  echo "*** Run Webpack ***" && \
+  node "./docker/build-lib.js"
+
 # Cleanup unnecessary files
 RUN \
   echo "*** Cleanup ***" && \

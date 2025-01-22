@@ -3,6 +3,7 @@ import { extension_settings, openThirdPartyExtensionMenu } from '../extensions.j
 import { oai_settings } from '../openai.js';
 import { SECRET_KEYS, secret_state } from '../secrets.js';
 import { textgen_types, textgenerationwebui_settings } from '../textgen-settings.js';
+import { getTokenCountAsync } from '../tokenizers.js';
 import { createThumbnail, isValidUrl } from '../utils.js';
 
 /**
@@ -235,6 +236,7 @@ export async function generateWebLlmChatPrompt(messages, params = {}) {
 
 /**
  * Counts the number of tokens in the provided text using WebLLM's default model.
+ * Fallbacks to the current model's tokenizer if WebLLM token count fails.
  * @param {string} text Text to count tokens in
  * @returns {Promise<number>} Number of tokens in the text
  */
@@ -243,9 +245,14 @@ export async function countWebLlmTokens(text) {
         throw new Error('WebLLM extension is not installed.');
     }
 
-    const engine = SillyTavern.llm;
-    const response = await engine.countTokens(text);
-    return response;
+    try {
+        const engine = SillyTavern.llm;
+        const response = await engine.countTokens(text);
+        return response;
+    } catch (error) {
+        // Fallback to using current model's tokenizer
+        return await getTokenCountAsync(text);
+    }
 }
 
 /**
