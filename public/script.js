@@ -443,6 +443,7 @@ export const event_types = {
     MESSAGE_DELETED: 'message_deleted',
     MESSAGE_UPDATED: 'message_updated',
     MESSAGE_FILE_EMBEDDED: 'message_file_embedded',
+    MORE_MESSAGES_LOADED: 'more_messages_loaded',
     IMPERSONATE_READY: 'impersonate_ready',
     CHAT_CHANGED: 'chat_id_changed',
     GENERATION_AFTER_COMMANDS: 'GENERATION_AFTER_COMMANDS',
@@ -1859,6 +1860,8 @@ export function showMoreMessages(messagesToLoad = null) {
         const newHeight = $('#chat').prop('scrollHeight');
         $('#chat').scrollTop(newHeight - prevHeight);
     }
+
+    eventSource.emit(event_types.MORE_MESSAGES_LOADED)
 }
 
 export async function printMessages() {
