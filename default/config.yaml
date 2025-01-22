@@ -194,5 +194,10 @@ claude:
   # should be ideal for most use cases.
   # Any value other than a non-negative integer will be ignored and caching at depth will not be enabled.
   cachingAtDepth: -1
+
+deepseek:
+  # Overrides the default base API URL for usage with alternative providers,
+  # like Hyperbolic
+  apiUrl: 'https://api.deepseek.com/beta'
 # -- SERVER PLUGIN CONFIGURATION --
 enableServerPlugins: false
