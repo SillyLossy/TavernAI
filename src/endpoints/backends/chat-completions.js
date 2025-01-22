@@ -52,7 +52,7 @@ const API_BLOCKENTROPY = 'https://api.blockentropy.ai/v1';
 const API_AI21 = 'https://api.ai21.com/studio/v1';
 const API_NANOGPT = 'https://nano-gpt.com/api/v1';
 
-const API_DEEPSEEK = getConfigValue('deepseek.apiUrl', 'https://api.deepseek.com/beta');
+const API_DEEPSEEK = (def => getConfigValue('deepseek.apiUrl', def) ?? def)( 'https://api.deepseek.com/beta');
 
 /**
  * Applies a post-processing step to the generated messages.

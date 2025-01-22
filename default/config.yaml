@@ -198,6 +198,6 @@ claude:
 deepseek:
   # Overrides the default base API URL for usage with alternative providers,
   # like Hyperbolic
-  apiUrl: 'https://api.deepseek.com/beta'
+  apiUrl: null
 # -- SERVER PLUGIN CONFIGURATION --
 enableServerPlugins: false
