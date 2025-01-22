@@ -697,7 +697,7 @@ async function sendDeepSeekRequest(request, response) {
 
         console.log('DeepSeek request:', requestBody);
 
-        const generateResponse = await fetch(apiUrl + '/chat/completions', config);
+        const generateResponse = await fetch(apiUrl + '/v1/chat/completions', config);
 
         if (request.body.stream) {
             forwardFetchResponse(generateResponse, response);
