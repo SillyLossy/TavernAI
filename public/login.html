@@ -14,6 +14,45 @@
         body {
             background-color: rgb(36, 36, 37);
         }
+
+        .social-links {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10001;
+        }
+
+        .social-links a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 24px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .social-links a:hover {
+            opacity: 1;
+        }
+
+        .social-links .fab {
+            display: inline-block;
+            width: auto;
+            height: auto;
+        }
+
+        /* 新增：禁用的链接样式 */
+        .social-links a.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
     </style>
     <link rel="preload" as="style" href="style.css">
     <link rel="apple-touch-icon" sizes="57x57" href="img/apple-icon-57x57.png" />
@@ -30,11 +69,26 @@
     <!-- fontawesome webfonts-->
     <link href="css/fontawesome.min.css" rel="stylesheet">
     <link href="css/solid.min.css" rel="stylesheet">
+    <link href="css/brands.min.css" rel="stylesheet">
     <link href="css/user.css" rel="stylesheet">
     <title>SillyTavern</title>
 </head>
 
 <body class="login">
+    <div class="social-links">
+        <a href="https://qm.qq.com/q/6YsQu0jXuE" target="_blank" title="加入QQ群: 237134801">
+            <i class="fab fa-qq"></i>
+        </a>
+        <a href="mailto:support@lovetavern.ai" title="发送邮件" class="disabled">
+            <i class="fas fa-envelope"></i>
+        </a>
+        <a href="https://discord.gg/sillytavern" target="_blank" title="Join Discord" class="disabled">
+            <i class="fab fa-discord"></i>
+        </a>
+        <a href="https://twitter.com/SillyTavern" target="_blank" title="Follow on X" class="disabled">
+            <i class="fab fa-x-twitter"></i>
+        </a>
+    </div>
     <div id="shadow_popup" style="opacity: 0;">
         <div id="dialogue_popup">
             <div id="dialogue_popup_holder">
