@@ -672,8 +672,8 @@ async function sendDeepSeekRequest(request, response) {
 
 
         const requestBody = {
-           'messages': processedMessages,
-           'model': request.body.model,
+            'messages': processedMessages,
+            'model': request.body.model,
             'temperature': request.body.temperature,
             'max_tokens': request.body.max_tokens,
             'stream': request.body.stream,
@@ -682,19 +682,19 @@ async function sendDeepSeekRequest(request, response) {
             'top_p': request.body.top_p,
             'stop': request.body.stop,
             'seed': request.body.seed,
-           ...bodyParams,
+            ...bodyParams,
         };
 
         const config = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                 'Authorization': 'Bearer ' + apiKey,
+                'Authorization': 'Bearer ' + apiKey,
             },
             body: JSON.stringify(requestBody),
             signal: controller.signal,
         };
-        
+
         console.log('DeepSeek request:', requestBody);
 
         const generateResponse = await fetch(apiUrl + '/v1/chat/completions', config);
@@ -702,18 +702,18 @@ async function sendDeepSeekRequest(request, response) {
         if (request.body.stream) {
             forwardFetchResponse(generateResponse, response);
         } else {
-             if (!generateResponse.ok) {
+            if (!generateResponse.ok) {
                 const errorText = await generateResponse.text();
                 console.log(`DeepSeek API returned error: ${generateResponse.status} ${generateResponse.statusText} ${errorText}`);
                 const errorJson = tryParse(errorText) ?? { error: true };
                 return response.status(500).send(errorJson);
             }
-           const generateResponseJson = await generateResponse.json();
+            const generateResponseJson = await generateResponse.json();
             console.log('DeepSeek response:', generateResponseJson);
             return response.send(generateResponseJson);
         }
     } catch (error) {
-       console.log('Error communicating with DeepSeek API: ', error);
+        console.log('Error communicating with DeepSeek API: ', error);
         if (!response.headersSent) {
             response.send({ error: true });
         } else {
