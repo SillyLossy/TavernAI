@@ -639,6 +639,90 @@ async function sendCohereRequest(request, response) {
     }
 }
 
+/**
+ * Sends a request to DeepSeek API.
+ * @param {express.Request} request Express request
+ * @param {express.Response} response Express response
+ */
+async function sendDeepSeekRequest(request, response) {
+    const apiUrl = new URL(request.body.reverse_proxy || API_DEEPSEEK.replace('/beta', ''));
+    const apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.DEEPSEEK);
+
+    if (!apiKey) {
+        console.log('DeepSeek API key is missing.');
+        return response.status(400).send({ error: true });
+    }
+
+    const controller = new AbortController();
+    request.socket.removeAllListeners('close');
+    request.socket.on('close', function () {
+        controller.abort();
+    });
+
+    try {
+        let bodyParams = {};
+
+        if (request.body.logprobs > 0) {
+            bodyParams['top_logprobs'] = request.body.logprobs;
+            bodyParams['logprobs'] = true;
+        }
+
+        const postProcessType = String(request.body.model).endsWith('-reasoner') ? 'deepseek-reasoner' : 'deepseek';
+        const processedMessages = postProcessPrompt(request.body.messages, postProcessType, getPromptNames(request));
+
+
+        const requestBody = {
+           'messages': processedMessages,
+           'model': request.body.model,
+            'temperature': request.body.temperature,
+            'max_tokens': request.body.max_tokens,
+            'stream': request.body.stream,
+            'presence_penalty': request.body.presence_penalty,
+            'frequency_penalty': request.body.frequency_penalty,
+            'top_p': request.body.top_p,
+            'stop': request.body.stop,
+            'seed': request.body.seed,
+           ...bodyParams,
+        };
+
+        const config = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + apiKey,
+            },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal,
+        };
+        
+        console.log('DeepSeek request:', requestBody);
+
+        const generateResponse = await fetch(apiUrl + '/v1/chat/completions', config);
+
+        if (request.body.stream) {
+            forwardFetchResponse(generateResponse, response);
+        } else {
+             if (!generateResponse.ok) {
+                const errorText = await generateResponse.text();
+                console.log(`DeepSeek API returned error: ${generateResponse.status} ${generateResponse.statusText} ${errorText}`);
+                const errorJson = tryParse(errorText) ?? { error: true };
+                return response.status(500).send(errorJson);
+            }
+           const generateResponseJson = await generateResponse.json();
+            console.log('DeepSeek response:', generateResponseJson);
+            return response.send(generateResponseJson);
+        }
+    } catch (error) {
+       console.log('Error communicating with DeepSeek API: ', error);
+        if (!response.headersSent) {
+            response.send({ error: true });
+        } else {
+            response.end();
+        }
+    }
+}
+
+
 export const router = express.Router();
 
 router.post('/status', jsonParser, async function (request, response_getstatus_openai) {
@@ -647,6 +731,7 @@ router.post('/status', jsonParser, async function (request, response_getstatus_o
     let api_url;
     let api_key_openai;
     let headers;
+
 
     if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENAI) {
         api_url = new URL(request.body.reverse_proxy || API_OPENAI).toString();
@@ -683,14 +768,14 @@ router.post('/status', jsonParser, async function (request, response_getstatus_o
         api_key_openai = readSecret(request.user.directories, SECRET_KEYS.NANOGPT);
         headers = {};
     } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.DEEPSEEK) {
-        api_url = API_DEEPSEEK.replace('/beta', '');
-        api_key_openai = readSecret(request.user.directories, SECRET_KEYS.DEEPSEEK);
+        api_url = new URL(request.body.reverse_proxy || API_DEEPSEEK.replace('/beta', ''));
+        api_key_openai = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.DEEPSEEK);
         headers = {};
-    } else {
+     } else {
         console.log('This chat completion source is not supported yet.');
         return response_getstatus_openai.status(400).send({ error: true });
     }
-
+    
     if (!api_key_openai && !request.body.reverse_proxy && request.body.chat_completion_source !== CHAT_COMPLETION_SOURCES.CUSTOM) {
         console.log('Chat Completion API key is missing.');
         return response_getstatus_openai.status(400).send({ error: true });
@@ -844,6 +929,7 @@ router.post('/generate', jsonParser, function (request, response) {
         case CHAT_COMPLETION_SOURCES.MAKERSUITE: return sendMakerSuiteRequest(request, response);
         case CHAT_COMPLETION_SOURCES.MISTRALAI: return sendMistralAIRequest(request, response);
         case CHAT_COMPLETION_SOURCES.COHERE: return sendCohereRequest(request, response);
+        case CHAT_COMPLETION_SOURCES.DEEPSEEK: return sendDeepSeekRequest(request, response);
     }
 
     let apiUrl;
@@ -1107,4 +1193,3 @@ router.post('/generate', jsonParser, function (request, response) {
         }
     }
 });
-
