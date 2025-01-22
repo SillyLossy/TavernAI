@@ -73,7 +73,7 @@ const keyMigrationMap = [
  * @returns {string[]} Array of all keys in the object
  */
 function getAllKeys(obj, prefix = '') {
-    if (typeof obj !== 'object' || Array.isArray(obj)) {
+    if (typeof obj !== 'object' || Array.isArray(obj) || obj === null) {
         return [];
     }
 
