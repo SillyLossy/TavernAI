@@ -1043,19 +1043,6 @@ router.post('/generate', jsonParser, function (request, response) {
         apiKey = readSecret(request.user.directories, SECRET_KEYS.BLOCKENTROPY);
         headers = {};
         bodyParams = {};
-    } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.DEEPSEEK) {
-        apiUrl = API_DEEPSEEK;
-        apiKey = readSecret(request.user.directories, SECRET_KEYS.DEEPSEEK);
-        headers = {};
-        bodyParams = {};
-
-        if (request.body.logprobs > 0) {
-            bodyParams['top_logprobs'] = request.body.logprobs;
-            bodyParams['logprobs'] = true;
-        }
-
-        const postProcessType = String(request.body.model).endsWith('-reasoner') ? 'deepseek-reasoner' : 'deepseek';
-        request.body.messages = postProcessPrompt(request.body.messages, postProcessType, getPromptNames(request));
     } else {
         console.log('This chat completion source is not supported yet.');
         return response.status(400).send({ error: true });
