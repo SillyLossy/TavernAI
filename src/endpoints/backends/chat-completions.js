@@ -645,7 +645,7 @@ async function sendCohereRequest(request, response) {
  * @param {express.Response} response Express response
  */
 async function sendDeepSeekRequest(request, response) {
-    const apiUrl = new URL(request.body.reverse_proxy || API_DEEPSEEK.replace('/beta', ''));
+    const apiUrl = new URL(request.body.reverse_proxy || API_DEEPSEEK).toString();
     const apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.DEEPSEEK);
 
     if (!apiKey) {
@@ -697,7 +697,7 @@ async function sendDeepSeekRequest(request, response) {
 
         console.log('DeepSeek request:', requestBody);
 
-        const generateResponse = await fetch(apiUrl + '/v1/chat/completions', config);
+        const generateResponse = await fetch(apiUrl + '/chat/completions', config);
 
         if (request.body.stream) {
             forwardFetchResponse(generateResponse, response);
