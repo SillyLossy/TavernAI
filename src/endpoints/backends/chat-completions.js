@@ -648,7 +648,7 @@ async function sendDeepSeekRequest(request, response) {
     const apiUrl = new URL(request.body.reverse_proxy || API_DEEPSEEK).toString();
     const apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.DEEPSEEK);
 
-    if (!apiKey) {
+    if (!apiKey && !request.body.reverse_proxy) {
         console.log('DeepSeek API key is missing.');
         return response.status(400).send({ error: true });
     }
@@ -669,7 +669,6 @@ async function sendDeepSeekRequest(request, response) {
 
         const postProcessType = String(request.body.model).endsWith('-reasoner') ? 'deepseek-reasoner' : 'deepseek';
         const processedMessages = postProcessPrompt(request.body.messages, postProcessType, getPromptNames(request));
-
 
         const requestBody = {
             'messages': processedMessages,
@@ -731,7 +730,6 @@ router.post('/status', jsonParser, async function (request, response_getstatus_o
     let api_url;
     let api_key_openai;
     let headers;
-
 
     if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENAI) {
         api_url = new URL(request.body.reverse_proxy || API_OPENAI).toString();
