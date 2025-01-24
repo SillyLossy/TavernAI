@@ -1046,9 +1046,9 @@ export class SlashCommandParser {
         /**@type {SlashCommandUnnamedArgumentAssignment}*/
         let assignment = new SlashCommandUnnamedArgumentAssignment();
         assignment.start = this.index;
-        if (!split && this.testQuotedValue()) {
+        if (!split && this.testEscapedQuotedValue()) {
             // if the next bit is a quoted value, take the whole value and gather contents as a list
-            assignment.value = this.parseQuotedValue();
+            assignment.value = this.parseEscapedQuotedValue();
             assignment.end = this.index;
             isList = true;
             listValues.push(assignment);
@@ -1060,9 +1060,9 @@ export class SlashCommandParser {
             if (split && splitCount && listValues.length >= splitCount) {
                 // the split count has just been reached: stop splitting, the rest is one singular value
                 split = false;
-                if (this.testQuotedValue()) {
+                if (this.testEscapedQuotedValue()) {
                     // if the next bit is a quoted value, take the whole value
-                    assignment.value = this.parseQuotedValue();
+                    assignment.value = this.parseEscapedQuotedValue();
                     assignment.end = this.index;
                     listValues.push(assignment);
                     listQuoted.push(true);
@@ -1079,9 +1079,9 @@ export class SlashCommandParser {
                     listQuoted.push(false);
                     assignment = new SlashCommandUnnamedArgumentAssignment();
                     assignment.start = this.index;
-                    if (!split && this.testQuotedValue()) {
+                    if (!split && this.testEscapedQuotedValue()) {
                         // if where currently not splitting and the next bit is a quoted value, take the whole value
-                        assignment.value = this.parseQuotedValue();
+                        assignment.value = this.parseEscapedQuotedValue();
                         assignment.end = this.index;
                         listValues.push(assignment);
                         listQuoted.push(true);
@@ -1099,9 +1099,9 @@ export class SlashCommandParser {
                 assignment.start = this.index;
                 if (split) this.discardWhitespace();
             } else if (split) {
-                if (this.testQuotedValue()) {
+                if (this.testEscapedQuotedValue()) {
                     assignment.start = this.index;
-                    assignment.value = this.parseQuotedValue();
+                    assignment.value = this.parseEscapedQuotedValue();
                     assignment.end = this.index;
                     listValues.push(assignment);
                     listQuoted.push(true);
@@ -1188,6 +1188,9 @@ export class SlashCommandParser {
     testQuotedValue() {
         return this.testSymbol('"');
     }
+    testEscapedQuotedValue() {
+        return this.testSymbol('="');
+    }
     testQuotedValueEnd() {
         if (this.endOfText) {
             if (this.verifyCommandNames) throw new SlashCommandParserError(`Unexpected end of quoted value at position ${this.index}`, this.text, this.index);
@@ -1198,6 +1201,10 @@ export class SlashCommandParser {
             throw new SlashCommandParserError(`Unexpected end of quoted value at position ${this.index}`, this.text, this.index);
         }
         return this.testSymbol('"') || (!this.flags[PARSER_FLAG.STRICT_ESCAPING] && this.testCommandEnd());
+    }
+    parseEscapedQuotedValue() {
+        this.take();
+        return this.parseQuotedValue();
     }
     parseQuotedValue() {
         this.take(); // discard opening quote
