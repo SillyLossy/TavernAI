@@ -2200,6 +2200,7 @@ function getMessageFromTemplate({
     isUser,
     avatarImg,
     bias,
+    reasoning,
     isSystem,
     title,
     timerValue,
@@ -2224,6 +2225,7 @@ function getMessageFromTemplate({
     mes.find('.avatar img').attr('src', avatarImg);
     mes.find('.ch_name .name_text').text(characterName);
     mes.find('.mes_bias').html(bias);
+    mes.find('.mes_reasoning').html(reasoning);
     mes.find('.timestamp').text(timestamp).attr('title', `${extra?.api ? extra.api + ' - ' : ''}${extra?.model ?? ''}`);
     mes.find('.mesIDDisplay').text(`#${mesId}`);
     tokenCount && mes.find('.tokenCounterDisplay').text(`${tokenCount}t`);
@@ -2238,10 +2240,16 @@ function getMessageFromTemplate({
     return mes;
 }
 
+/**
+ * Re-renders a message block with updated content.
+ * @param {number} messageId Message ID
+ * @param {object} message Message object
+ */
 export function updateMessageBlock(messageId, message) {
     const messageElement = $(`#chat [mesid="${messageId}"]`);
     const text = message?.extra?.display_text ?? message.mes;
     messageElement.find('.mes_text').html(messageFormatting(text, message.name, message.is_system, message.is_user, messageId));
+    messageElement.find('.mes_reasoning').html(messageFormatting(message.extra?.reasoning ?? '', '', false, false, -1));
     addCopyToCodeBlocks(messageElement);
     appendMediaToMessage(message, messageElement);
 }
@@ -2400,6 +2408,7 @@ export function addOneMessage(mes, { type = 'normal', insertAfter = null, scroll
         sanitizerOverrides,
     );
     const bias = messageFormatting(mes.extra?.bias ?? '', '', false, false, -1);
+    const reasoning = messageFormatting(mes.extra?.reasoning ?? '', '', false, false, -1);
     let bookmarkLink = mes?.extra?.bookmark_link ?? '';
 
     let params = {
@@ -2409,6 +2418,7 @@ export function addOneMessage(mes, { type = 'normal', insertAfter = null, scroll
         isUser: mes.is_user,
         avatarImg: avatarImg,
         bias: bias,
+        reasoning: reasoning,
         isSystem: isSystem,
         title: title,
         bookmarkLink: bookmarkLink,
@@ -2468,6 +2478,7 @@ export function addOneMessage(mes, { type = 'normal', insertAfter = null, scroll
         const swipeMessage = chatElement.find(`[mesid="${chat.length - 1}"]`);
         swipeMessage.attr('swipeid', params.swipeId);
         swipeMessage.find('.mes_text').html(messageText).attr('title', title);
+        swipeMessage.find('.mes_reasoning').html(reasoning);
         swipeMessage.find('.timestamp').text(timestamp).attr('title', `${params.extra.api} - ${params.extra.model}`);
         appendMediaToMessage(mes, swipeMessage);
         if (power_user.timestamp_model_icon && params.extra?.api) {
@@ -3078,6 +3089,7 @@ class StreamingProcessor {
         this.messageTextDom = null;
         this.messageTimerDom = null;
         this.messageTokenCounterDom = null;
+        this.messageReasoningDom = null;
         /** @type {HTMLTextAreaElement} */
         this.sendTextarea = document.querySelector('#send_textarea');
         this.type = type;
@@ -3093,6 +3105,7 @@ class StreamingProcessor {
         /** @type {import('./scripts/logprobs.js').TokenLogprobs[]} */
         this.messageLogprobs = [];
         this.toolCalls = [];
+        this.reasoning = '';
     }
 
     #checkDomElements(messageId) {
@@ -3101,6 +3114,7 @@ class StreamingProcessor {
             this.messageTextDom = this.messageDom?.querySelector('.mes_text');
             this.messageTimerDom = this.messageDom?.querySelector('.mes_timer');
             this.messageTokenCounterDom = this.messageDom?.querySelector('.tokenCounterDisplay');
+            this.messageReasoningDom = this.messageDom?.querySelector('.mes_reasoning');
         }
     }
 
@@ -3185,11 +3199,19 @@ class StreamingProcessor {
             chat[messageId]['gen_started'] = this.timeStarted;
             chat[messageId]['gen_finished'] = currentTime;
 
-            if (currentTokenCount) {
-                if (!chat[messageId]['extra']) {
-                    chat[messageId]['extra'] = {};
-                }
+            if (!chat[messageId]['extra']) {
+                chat[messageId]['extra'] = {};
+            }
 
+            if (this.reasoning) {
+                chat[messageId]['extra']['reasoning'] = this.reasoning;
+                if (this.messageReasoningDom instanceof HTMLElement) {
+                    const formattedReasoning = messageFormatting(this.reasoning, '', false, false, -1);
+                    this.messageReasoningDom.innerHTML = formattedReasoning;
+                }
+            }
+
+            if (currentTokenCount) {
                 chat[messageId]['extra']['token_count'] = currentTokenCount;
                 if (this.messageTokenCounterDom instanceof HTMLElement) {
                     this.messageTokenCounterDom.textContent = `${currentTokenCount}t`;
@@ -3321,7 +3343,7 @@ class StreamingProcessor {
     }
 
     /**
-     * @returns {Generator<{ text: string, swipes: string[], logprobs: import('./scripts/logprobs.js').TokenLogprobs, toolCalls: any[] }, void, void>}
+     * @returns {Generator<{ text: string, swipes: string[], logprobs: import('./scripts/logprobs.js').TokenLogprobs, toolCalls: any[], state: any }, void, void>}
      */
     *nullStreamingGeneration() {
         throw new Error('Generation function for streaming is not hooked up');
@@ -3343,7 +3365,7 @@ class StreamingProcessor {
         try {
             const sw = new Stopwatch(1000 / power_user.streaming_fps);
             const timestamps = [];
-            for await (const { text, swipes, logprobs, toolCalls } of this.generator()) {
+            for await (const { text, swipes, logprobs, toolCalls, state } of this.generator()) {
                 timestamps.push(Date.now());
                 if (this.isStopped) {
                     return;
@@ -3355,6 +3377,7 @@ class StreamingProcessor {
                 if (logprobs) {
                     this.messageLogprobs.push(...(Array.isArray(logprobs) ? logprobs : [logprobs]));
                 }
+                this.reasoning = state?.reasoning ?? '';
                 await eventSource.emit(event_types.STREAM_TOKEN_RECEIVED, text);
                 await sw.tick(() => this.onProgressStreaming(this.messageId, this.continueMessage + text));
             }
@@ -4742,6 +4765,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         //const getData = await response.json();
         let getMessage = extractMessageFromData(data);
         let title = extractTitleFromData(data);
+        let reasoning = extractReasoningFromData(data);
         kobold_horde_model = title;
 
         const swipes = extractMultiSwipes(data, type);
@@ -4768,10 +4792,10 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         else {
             // Without streaming we'll be having a full message on continuation. Treat it as a last chunk.
             if (originalType !== 'continue') {
-                ({ type, getMessage } = await saveReply(type, getMessage, false, title, swipes));
+                ({ type, getMessage } = await saveReply(type, getMessage, false, title, swipes, reasoning));
             }
             else {
-                ({ type, getMessage } = await saveReply('appendFinal', getMessage, false, title, swipes));
+                ({ type, getMessage } = await saveReply('appendFinal', getMessage, false, title, swipes, reasoning));
             }
 
             // This relies on `saveReply` having been called to add the message to the chat, so it must be last.
@@ -5654,36 +5678,45 @@ function parseAndSaveLogprobs(data, continueFrom) {
  * @param {object} data Response data
  * @returns {string} Extracted message
  */
-function extractMessageFromData(data) {
+function extractMessageFromData(data){
     if (typeof data === 'string') {
         return data;
     }
 
-    function getTextContext() {
-        switch (main_api) {
-            case 'kobold':
-                return data.results[0].text;
-            case 'koboldhorde':
-                return data.text;
-            case 'textgenerationwebui':
-                return data.choices?.[0]?.text ?? data.content ?? data.response ?? '';
-            case 'novel':
-                return data.output;
-            case 'openai':
-                return data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? data?.text ?? data?.message?.content?.[0]?.text ?? data?.message?.tool_plan ?? '';
-            default:
-                return '';
+    switch (main_api) {
+        case 'kobold':
+            return data.results[0].text;
+        case 'koboldhorde':
+            return data.text;
+        case 'textgenerationwebui':
+            return data.choices?.[0]?.text ?? data.content ?? data.response ?? '';
+        case 'novel':
+            return data.output;
+        case 'openai':
+            return data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? data?.text ?? data?.message?.content?.[0]?.text ?? data?.message?.tool_plan ?? '';
+        default:
+            return '';
+    }
+}
+
+/**
+ * Extracts the reasoning from the response data.
+ * @param {object} data Response data
+ * @returns {string} Extracted reasoning
+ */
+function extractReasoningFromData(data) {
+    if (main_api === 'openai' && oai_settings.show_thoughts) {
+        switch (oai_settings.chat_completion_source) {
+            case chat_completion_sources.DEEPSEEK:
+                return data?.choices?.[0]?.message?.reasoning_content ?? '';
+            case chat_completion_sources.OPENROUTER:
+                return data?.choices?.[0]?.message?.reasoning ?? '';
+            case chat_completion_sources.MAKERSUITE:
+                return data?.responseContent?.parts?.filter(part => part.thought)?.map(part => part.text)?.join('\n\n') ?? '';
         }
     }
 
-    const content = getTextContext();
-
-    if (main_api === 'openai' && oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK && oai_settings.show_thoughts) {
-        const thoughts = data?.choices?.[0]?.message?.reasoning_content ?? '';
-        return [thoughts, content].filter(x => x).join('\n\n');
-    }
-
-    return content;
+    return '';
 }
 
 /**
@@ -5866,7 +5899,7 @@ export function cleanUpMessage(getMessage, isImpersonate, isContinue, displayInc
     return getMessage;
 }
 
-export async function saveReply(type, getMessage, fromStreaming, title, swipes) {
+export async function saveReply(type, getMessage, fromStreaming, title, swipes, reasoning) {
     if (type != 'append' && type != 'continue' && type != 'appendFinal' && chat.length && (chat[chat.length - 1]['swipe_id'] === undefined ||
         chat[chat.length - 1]['is_user'])) {
         type = 'normal';
@@ -5891,6 +5924,7 @@ export async function saveReply(type, getMessage, fromStreaming, title, swipes) 
             chat[chat.length - 1]['send_date'] = getMessageTimeStamp();
             chat[chat.length - 1]['extra']['api'] = getGeneratingApi();
             chat[chat.length - 1]['extra']['model'] = getGeneratingModel();
+            chat[chat.length - 1]['extra']['reasoning'] = reasoning;
             if (power_user.message_token_count_enabled) {
                 chat[chat.length - 1]['extra']['token_count'] = await getTokenCountAsync(chat[chat.length - 1]['mes'], 0);
             }
@@ -5911,6 +5945,7 @@ export async function saveReply(type, getMessage, fromStreaming, title, swipes) 
         chat[chat.length - 1]['send_date'] = getMessageTimeStamp();
         chat[chat.length - 1]['extra']['api'] = getGeneratingApi();
         chat[chat.length - 1]['extra']['model'] = getGeneratingModel();
+        chat[chat.length - 1]['extra']['reasoning'] += reasoning;
         if (power_user.message_token_count_enabled) {
             chat[chat.length - 1]['extra']['token_count'] = await getTokenCountAsync(chat[chat.length - 1]['mes'], 0);
         }
@@ -5928,6 +5963,7 @@ export async function saveReply(type, getMessage, fromStreaming, title, swipes) 
         chat[chat.length - 1]['send_date'] = getMessageTimeStamp();
         chat[chat.length - 1]['extra']['api'] = getGeneratingApi();
         chat[chat.length - 1]['extra']['model'] = getGeneratingModel();
+        chat[chat.length - 1]['extra']['reasoning'] += reasoning;
         if (power_user.message_token_count_enabled) {
             chat[chat.length - 1]['extra']['token_count'] = await getTokenCountAsync(chat[chat.length - 1]['mes'], 0);
         }
@@ -5945,6 +5981,7 @@ export async function saveReply(type, getMessage, fromStreaming, title, swipes) 
         chat[chat.length - 1]['send_date'] = getMessageTimeStamp();
         chat[chat.length - 1]['extra']['api'] = getGeneratingApi();
         chat[chat.length - 1]['extra']['model'] = getGeneratingModel();
+        chat[chat.length - 1]['extra']['reasoning'] = reasoning;
         if (power_user.trim_spaces) {
             getMessage = getMessage.trim();
         }
@@ -8647,6 +8684,7 @@ const swipe_right = () => {
                     // resets the timer
                     swipeMessage.find('.mes_timer').html('');
                     swipeMessage.find('.tokenCounterDisplay').text('');
+                    swipeMessage.find('.mes_reasoning').html('');
                 } else {
                     //console.log('showing previously generated swipe candidate, or "..."');
                     //console.log('onclick right swipe calling addOneMessage');

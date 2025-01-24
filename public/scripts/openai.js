@@ -2095,7 +2095,7 @@ async function sendOpenAIRequest(type, messages, signal) {
             let text = '';
             const swipes = [];
             const toolCalls = [];
-            const state = {};
+            const state = { reasoning: '' };
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) return;
@@ -2113,7 +2113,7 @@ async function sendOpenAIRequest(type, messages, signal) {
 
                 ToolManager.parseToolCalls(toolCalls, parsed);
 
-                yield { text, swipes: swipes, logprobs: parseChatCompletionLogprobs(parsed), toolCalls: toolCalls };
+                yield { text, swipes: swipes, logprobs: parseChatCompletionLogprobs(parsed), toolCalls: toolCalls, state: state };
             }
         };
     }
@@ -2150,16 +2150,22 @@ function getStreamingReply(data, state) {
     if (oai_settings.chat_completion_source === chat_completion_sources.CLAUDE) {
         return data?.delta?.text || '';
     } else if (oai_settings.chat_completion_source === chat_completion_sources.MAKERSUITE) {
-        return data?.candidates?.[0]?.content?.parts?.filter(x => oai_settings.show_thoughts || !x.thought)?.map(x => x.text)?.filter(x => x)?.join('\n\n') || '';
+        if (oai_settings.show_thoughts) {
+            state.reasoning += (data?.candidates?.[0]?.content?.parts?.filter(x =>  x.thought)?.map(x => x.text)?.[0] || '');
+        }
+        return data?.candidates?.[0]?.content?.parts?.filter(x => !x.thought)?.map(x => x.text)?.[0] || '';
     } else if (oai_settings.chat_completion_source === chat_completion_sources.COHERE) {
         return data?.delta?.message?.content?.text || data?.delta?.message?.tool_plan || '';
     } else if (oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK) {
-        const hadThoughts = state.hadThoughts;
-        const thoughts = data.choices?.filter(x => oai_settings.show_thoughts || !x?.delta?.reasoning_content)?.[0]?.delta?.reasoning_content || '';
-        const content = data.choices?.[0]?.delta?.content || '';
-        state.hadThoughts = !!thoughts;
-        const separator = hadThoughts && !thoughts ? '\n\n' : '';
-        return [thoughts, separator, content].filter(x => x).join('\n\n');
+        if (oai_settings.show_thoughts) {
+            state.reasoning += (data.choices?.filter(x => x?.delta?.reasoning_content)?.[0]?.delta?.reasoning_content || '');
+        }
+        return data.choices?.[0]?.delta?.content || '';
+    } else if (oai_settings.chat_completion_source === chat_completion_sources.OPENROUTER) {
+        if (oai_settings.show_thoughts) {
+            state.reasoning += (data.choices?.filter(x => x?.delta?.reasoning)?.[0]?.delta?.reasoning || '');
+        }
+        return data.choices?.[0]?.delta?.content ?? data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? '';
     } else  {
         return data.choices?.[0]?.delta?.content ?? data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? '';
     }

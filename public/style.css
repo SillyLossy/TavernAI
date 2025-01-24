@@ -292,36 +292,44 @@ input[type='checkbox']:focus-visible {
     filter: grayscale(25%);
 }
 
-.mes_text table {
+.mes_text table,
+.mes_reasoning table {
     border-spacing: 0;
     border-collapse: collapse;
     margin-bottom: 10px;
 }
 
 .mes_text td,
-.mes_text th {
+.mes_text th,
+.mes_reasoning td,
+.mes_reasoning th {
     border: 1px solid;
     border-collapse: collapse;
     padding: 0.25em;
 }
 
-.mes_text p {
+.mes_text p,
+.mes_reasoning p {
     margin-top: 0;
     margin-bottom: 10px;
 }
 
-.mes_text li tt {
+.mes_text li tt,
+.mes_reasoning li tt {
     display: inline-block;
 }
 
 .mes_text ol,
-.mes_text ul {
+.mes_text ul,
+.mes_reasoning ol,
+.mes_reasoning ul {
     margin-top: 5px;
     margin-bottom: 5px;
 }
 
 .mes_text br,
-.mes_bias br {
+.mes_bias br,
+.mes_reasoning br {
     content: ' ';
 }
 
@@ -332,25 +340,68 @@ input[type='checkbox']:focus-visible {
     color: var(--SmartThemeQuoteColor);
 }
 
+.mes_reasoning {
+    display: block;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-color: var(--black30a);
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px 0;
+    overflow-y: auto;
+    max-height: 70vh;
+}
+
+.mes_reasoning_summary {
+    cursor: pointer;
+    position: relative;
+}
+
+.mes_reasoning_details:not([open]) .mes_reasoning_copy {
+    display: none;
+}
+
+.mes_reasoning_copy {
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.mes_reasoning_summary > span {
+    margin-left: 5px;
+}
+
+.mes_reasoning_details:has(.mes_reasoning:empty),
+.mes_block:has(.edit_textarea) .mes_reasoning_details,
+.mes_bias:empty,
+.mes_reasoning:empty {
+    display: none;
+}
+
 .mes_text i,
-.mes_text em {
+.mes_text em,
+.mes_reasoning i,
+.mes_reasoning em  {
     color: var(--SmartThemeEmColor);
 }
 
-.mes_text u {
+.mes_text u,
+.mes_reasoning u {
     color: var(--SmartThemeUnderlineColor);
 }
 
-.mes_text q {
+.mes_text q,
+.mes_reasoning q {
     color: var(--SmartThemeQuoteColor);
 }
 
 .mes_text font[color] em,
-.mes_text font[color] i {
-    color: inherit;
-}
-
-.mes_text font[color] q {
+.mes_text font[color] i,
+.mes_text font[color] u,
+.mes_text font[color] q,
+.mes_reasoning font[color] em,
+.mes_reasoning font[color] i,
+.mes_reasoning font[color] u,
+.mes_reasoning font[color] q  {
     color: inherit;
 }
 
@@ -358,7 +409,8 @@ input[type='checkbox']:focus-visible {
     display: block;
 }
 
-.mes_text blockquote {
+.mes_text blockquote,
+.mes_reasoning blockquote {
     border-left: 3px solid var(--SmartThemeQuoteColor);
     padding-left: 10px;
     background-color: var(--black30a);
@@ -368,18 +420,24 @@ input[type='checkbox']:focus-visible {
 .mes_text strong em,
 .mes_text strong,
 .mes_text h2,
-.mes_text h1 {
+.mes_text h1,
+.mes_reasoning strong em,
+.mes_reasoning strong,
+.mes_reasoning h2,
+.mes_reasoning h1 {
     font-weight: bold;
 }
 
-.mes_text pre code {
+.mes_text pre code,
+.mes_reasoning pre code {
     position: relative;
     display: block;
     overflow-x: auto;
     padding: 1em;
 }
 
-.mes_text img:not(.mes_img) {
+.mes_text img:not(.mes_img),
+.mes_reasoning img:not(.mes_img) {
     max-width: 100%;
     max-height: var(--doc-height);
 }
@@ -1022,6 +1080,7 @@ body .panelControlBar {
     /*only affects bubblechat to make it sit nicely at the bottom*/
 }
 
+.last_mes .mes_reasoning,
 .last_mes .mes_text {
     padding-right: 30px;
 }
@@ -1235,14 +1294,18 @@ body.swipeAllMessages .mes:not(.last_mes) .swipes-counter {
     overflow-y: clip;
 }
 
-.mes_text {
+.mes_text,
+.mes_reasoning {
     font-weight: 500;
     line-height: calc(var(--mainFontSize) + .5rem);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.mes_text {
     padding-left: 0;
     padding-top: 5px;
     padding-bottom: 5px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
 }
 
 br {

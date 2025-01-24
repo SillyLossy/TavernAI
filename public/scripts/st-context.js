@@ -1,6 +1,7 @@
 import {
     activateSendButtons,
     addOneMessage,
+    appendMediaToMessage,
     callPopup,
     characters,
     chat,
@@ -41,6 +42,7 @@ import {
     substituteParamsExtended,
     this_chid,
     updateChatMetadata,
+    updateMessageBlock,
 } from '../script.js';
 import {
     extension_settings,
@@ -171,6 +173,8 @@ export function getContext() {
         getCharacters,
         uuidv4,
         humanizedDateTime,
+        updateMessageBlock,
+        appendMediaToMessage,
     };
 }
 

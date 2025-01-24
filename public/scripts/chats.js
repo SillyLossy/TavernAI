@@ -37,6 +37,7 @@ import {
     saveBase64AsFile,
     extractTextFromOffice,
     download,
+    copyText,
 } from './utils.js';
 import { extension_settings, renderExtensionTemplateAsync, saveMetadataDebounced } from './extensions.js';
 import { POPUP_RESULT, POPUP_TYPE, Popup, callGenericPopup } from './popup.js';
@@ -1566,6 +1567,25 @@ jQuery(function () {
 
     $(document).on('click', '.mes_img_enlarge', enlargeMessageImage);
     $(document).on('click', '.mes_img_delete', deleteMessageImage);
+
+    $(document).on('click', '.mes_reasoning_copy', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+    });
+
+    $(document).on('pointerup', '.mes_reasoning_copy', async function () {
+        const mesBlock = $(this).closest('.mes');
+        const mesId = mesBlock.attr('mesid');
+        const message = chat[mesId];
+        const reasoning = message?.extra?.reasoning;
+
+        if (!reasoning) {
+            return;
+        }
+
+        await copyText(reasoning);
+        toastr.info(t`Copied!`, '', { timeOut: 2000 });
+    });
 
     $('#file_form_input').on('change', async () => {
         const fileInput = document.getElementById('file_form_input');
