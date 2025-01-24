@@ -3333,10 +3333,16 @@
                             </div>
                             <h4 data-i18n="Prompt Post-Processing">Prompt Post-Processing</h4>
                             <select id="custom_prompt_post_processing" class="text_pole" title="Applies additional processing to the prompt before sending it to the API." data-i18n="[title]Applies additional processing to the prompt before sending it to the API.">
-                                <option data-i18n="prompt_post_processing_none" value="">None</option>
-                                <option data-i18n="prompt_post_processing_merge" value="merge">Merge consecutive roles</option>
-                                <option data-i18n="prompt_post_processing_semi" value="semi">Semi-strict (alternating roles)</option>
-                                <option data-i18n="prompt_post_processing_strict" value="strict">Strict (user first, alternating roles)</option>
+                                <optgroup label="Main">
+                                    <option data-i18n="prompt_post_processing_none" value="">None</option>
+                                    <option data-i18n="prompt_post_processing_merge" value="merge">Merge consecutive roles</option>
+                                    <option data-i18n="prompt_post_processing_semi" value="semi">Semi-strict (alternating roles)</option>
+                                    <option data-i18n="prompt_post_processing_strict" value="strict">Strict (user first, alternating roles)</option>
+                                </optgroup>
+                                <optgroup label="DeepSeek prefix">
+                                    <option data-i18n="prompt_post_processing_deepseek" value="deepseek">deepseek-chat (semi-strict)</option>
+                                    <option data-i18n="prompt_post_processing_deepseek-reasoner" value="deepseek-reasoner">deepseek-reasoner (strict)</option>
+                                </optgroup>
                             </select>
                         </form>
                         <div id="01ai_form" data-source="01ai">
