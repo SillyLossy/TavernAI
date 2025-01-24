@@ -41,7 +41,7 @@
         "multer": "^1.4.5-lts.1",
         "node-fetch": "^3.3.2",
         "node-persist": "^4.0.4",
-        "open": "^10.1.0",
+        "open": "^8.4.2",
         "png-chunk-text": "^1.0.0",
         "png-chunks-encode": "^1.0.0",
         "png-chunks-extract": "^1.0.0",
