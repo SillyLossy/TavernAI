@@ -1977,12 +1977,12 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="range-block" data-source="makersuite">
+                                    <div class="range-block" data-source="makersuite,deepseek">
                                         <label for="openai_show_thoughts" class="checkbox_label widthFreeExpand">
                                             <input id="openai_show_thoughts" type="checkbox" />
                                             <span>
                                                 <span data-i18n="Show model thoughts">Show model thoughts</span>
-                                                <i class="opacity50p fa-solid fa-circle-info" title="Gemini 2.0 Thinking"></i>
+                                                <i class="opacity50p fa-solid fa-circle-info" title="Gemini 2.0 Thinking / DeepSeek Reasoner"></i>
                                             </span>
                                         </label>
                                         <div class="toggle-description justifyLeft marginBot5">
@@ -2692,7 +2692,7 @@
                                 <option value="windowai">Window AI</option>
                             </optgroup>
                         </select>
-                        <div class="inline-drawer wide100p" data-source="openai,claude,mistralai,makersuite">
+                        <div class="inline-drawer wide100p" data-source="openai,claude,mistralai,makersuite,deepseek">
                             <div class="inline-drawer-toggle inline-drawer-header">
                                 <b data-i18n="Reverse Proxy">Reverse Proxy</b>
                                 <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
@@ -2755,7 +2755,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="ReverseProxyWarningMessage" data-source="openai,claude,mistralai,makersuite">
+                        <div id="ReverseProxyWarningMessage" data-source="openai,claude,mistralai,makersuite,deepseek">
                             <div class="reverse_proxy_warning">
                                 <b>
                                     <div data-i18n="Using a proxy that you're not running yourself is a risk to your data privacy.">
@@ -3062,7 +3062,9 @@
                                         <option value="gemini-1.0-ultra-latest">Gemini 1.0 Ultra</option>
                                     </optgroup>
                                     <optgroup label="Subversions">
-                                        <option value="gemini-2.0-flash-thinking-exp-1219">Gemini 2.0 Flash Thinking Experimental</option>
+                                        <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking Experimental</option>
+                                        <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Experimental 2025-01-21</option>
+                                        <option value="gemini-2.0-flash-thinking-exp-1219">Gemini 2.0 Flash Thinking Experimental 2024-12-19</option>
                                         <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Experimental</option>
                                         <option value="gemini-exp-1114">Gemini Experimental 2024-11-14</option>
                                         <option value="gemini-exp-1121">Gemini Experimental 2024-11-21</option>
@@ -3209,6 +3211,7 @@
                                 <select id="model_deepseek_select">
                                     <option value="deepseek-chat">deepseek-chat</option>
                                     <option value="deepseek-coder">deepseek-coder</option>
+                                    <option value="deepseek-reasoner">deepseek-reasoner</option>
                                 </select>
                             </div>
                         </div>

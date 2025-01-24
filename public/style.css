@@ -5643,6 +5643,7 @@ body:not(.movingUI) .drawer-content.maximized {
 
 .model-card .details-container {
     text-align: right;
+    line-height: 0.9;
 }
 
 .model-card:hover {
@@ -5665,7 +5666,7 @@ body:not(.movingUI) .drawer-content.maximized {
 }
 
 .model-title {
-    font-size: 13px;
+    font-size: calc(var(--mainFontSize) * 0.95);
     font-weight: bold;
     overflow: hidden;
 }
@@ -5681,7 +5682,7 @@ body:not(.movingUI) .drawer-content.maximized {
 .model-class,
 .model-context-length,
 .model-date-added {
-    font-size: 10px;
+    font-size: calc(var(--mainFontSize) * 0.75);
 }
 
 .model-class,
@@ -5762,4 +5763,18 @@ body:not(.movingUI) .drawer-content.maximized {
 
 .alternate_greetings_list {
     overflow-y: scroll;
+}
+
+.mes_text div[data-type="assistant_note"]:has(.assistant_note_export) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 0 2px;
+}
+
+.mes_text div[data-type="assistant_note"]:has(.assistant_note_export)>div:not(.assistant_note_export) {
+    flex: 1;
 }

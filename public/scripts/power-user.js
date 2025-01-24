@@ -2534,7 +2534,7 @@ async function loadUntilMesId(mesId) {
     let target;
 
     while (getFirstDisplayedMessageId() > mesId && getFirstDisplayedMessageId() !== 0) {
-        showMoreMessages();
+        await showMoreMessages();
         await delay(1);
         target = $('#chat').find(`.mes[mesid=${mesId}]`);
 

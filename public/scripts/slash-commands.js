@@ -1968,8 +1968,8 @@ export function initDefaultSlashCommands() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'chat-render',
         helpString: 'Renders a specified number of messages into the chat window. Displays all messages if no argument is provided.',
-        callback: (args, number) => {
-            showMoreMessages(number && !isNaN(Number(number)) ? Number(number) : Number.MAX_SAFE_INTEGER);
+        callback: async (args, number) => {
+            await showMoreMessages(number && !isNaN(Number(number)) ? Number(number) : Number.MAX_SAFE_INTEGER);
             if (isTrueBoolean(String(args?.scroll ?? ''))) {
                 $('#chat').scrollTop(0);
             }

@@ -81,6 +81,7 @@ import { t } from './i18n.js';
 
 export {
     selected_group,
+    openGroupId,
     is_group_automode_enabled,
     hideMutedSprites,
     is_group_generating,

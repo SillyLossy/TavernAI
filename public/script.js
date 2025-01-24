@@ -443,6 +443,7 @@ export const event_types = {
     MESSAGE_DELETED: 'message_deleted',
     MESSAGE_UPDATED: 'message_updated',
     MESSAGE_FILE_EMBEDDED: 'message_file_embedded',
+    MORE_MESSAGES_LOADED: 'more_messages_loaded',
     IMPERSONATE_READY: 'impersonate_ready',
     CHAT_CHANGED: 'chat_id_changed',
     GENERATION_AFTER_COMMANDS: 'GENERATION_AFTER_COMMANDS',
@@ -723,6 +724,7 @@ async function getSystemMessages() {
             is_user: false,
             is_system: true,
             mes: await renderTemplateAsync('assistantNote'),
+            uses_system_ui: true,
             extra: {
                 isSmallSys: true,
             },
@@ -1829,7 +1831,7 @@ export async function replaceCurrentChat() {
     }
 }
 
-export function showMoreMessages(messagesToLoad = null) {
+export async function showMoreMessages(messagesToLoad = null) {
     const firstDisplayedMesId = $('#chat').children('.mes').first().attr('mesid');
     let messageId = Number(firstDisplayedMesId);
     let count = messagesToLoad || power_user.chat_truncation || Number.MAX_SAFE_INTEGER;
@@ -1859,6 +1861,8 @@ export function showMoreMessages(messagesToLoad = null) {
         const newHeight = $('#chat').prop('scrollHeight');
         $('#chat').scrollTop(newHeight - prevHeight);
     }
+
+    await eventSource.emit(event_types.MORE_MESSAGES_LOADED);
 }
 
 export async function printMessages() {
@@ -3902,7 +3906,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
      * @returns {string[]} Examples array with block heading
      */
     function parseMesExamples(examplesStr) {
-        if (examplesStr.length === 0 || examplesStr === '<START>') {
+        if (!examplesStr || examplesStr.length === 0 || examplesStr === '<START>') {
             return [];
         }
 
@@ -5655,20 +5659,31 @@ function extractMessageFromData(data) {
         return data;
     }
 
-    switch (main_api) {
-        case 'kobold':
-            return data.results[0].text;
-        case 'koboldhorde':
-            return data.text;
-        case 'textgenerationwebui':
-            return data.choices?.[0]?.text ?? data.content ?? data.response ?? '';
-        case 'novel':
-            return data.output;
-        case 'openai':
-            return data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? data?.text ?? data?.message?.content?.[0]?.text ?? data?.message?.tool_plan ?? '';
-        default:
-            return '';
+    function getTextContext() {
+        switch (main_api) {
+            case 'kobold':
+                return data.results[0].text;
+            case 'koboldhorde':
+                return data.text;
+            case 'textgenerationwebui':
+                return data.choices?.[0]?.text ?? data.content ?? data.response ?? '';
+            case 'novel':
+                return data.output;
+            case 'openai':
+                return data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? data?.text ?? data?.message?.content?.[0]?.text ?? data?.message?.tool_plan ?? '';
+            default:
+                return '';
+        }
     }
+
+    const content = getTextContext();
+
+    if (main_api === 'openai' && oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK && oai_settings.show_thoughts) {
+        const thoughts = data?.choices?.[0]?.message?.reasoning_content ?? '';
+        return [thoughts, content].filter(x => x).join('\n\n');
+    }
+
+    return content;
 }
 
 /**
@@ -11454,8 +11469,8 @@ jQuery(async function () {
         $('#avatar-and-name-block').slideToggle();
     });
 
-    $(document).on('mouseup touchend', '#show_more_messages', () => {
-        showMoreMessages();
+    $(document).on('mouseup touchend', '#show_more_messages', async function () {
+        await showMoreMessages();
     });
 
     $(document).on('click', '.open_characters_library', async function () {

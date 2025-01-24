@@ -164,7 +164,7 @@ function getSourceSettings(source, request) {
             };
         case 'transformers':
             return {
-                model: getConfigValue('extras.embeddingModel', ''),
+                model: getConfigValue('extensions.models.embedding', ''),
             };
         case 'palm':
             return {

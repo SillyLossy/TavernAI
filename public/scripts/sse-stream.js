@@ -220,6 +220,21 @@ async function* parseStreamData(json) {
                 }
                 return;
             }
+            else if (typeof json.choices[0].delta.reasoning_content === 'string' && json.choices[0].delta.reasoning_content.length > 0) {
+                for (let j = 0; j < json.choices[0].delta.reasoning_content.length; j++) {
+                    const str = json.choices[0].delta.reasoning_content[j];
+                    const isLastSymbol = j === json.choices[0].delta.reasoning_content.length - 1;
+                    const choiceClone = structuredClone(json.choices[0]);
+                    choiceClone.delta.reasoning_content = str;
+                    choiceClone.delta.content = isLastSymbol ? choiceClone.delta.content : '';
+                    const choices = [choiceClone];
+                    yield {
+                        data: { ...json, choices },
+                        chunk: str,
+                    };
+                }
+                return;
+            }
             else if (typeof json.choices[0].delta.content === 'string' && json.choices[0].delta.content.length > 0) {
                 for (let j = 0; j < json.choices[0].delta.content.length; j++) {
                     const str = json.choices[0].delta.content[j];
