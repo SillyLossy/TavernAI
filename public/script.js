@@ -5680,7 +5680,9 @@ function extractMessageFromData(data) {
 
     if (main_api === 'openai' && oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK && oai_settings.show_thoughts) {
         const thoughts = data?.choices?.[0]?.message?.reasoning_content ?? '';
-        return [thoughts, content].filter(x => x).join('\n\n');
+        const thinkingBegin = thoughts ? '<think>\n' : '';
+        const thinkingEnd = thoughts ? '\n</think>\n\n' : '';
+        return [thinkingBegin, thoughts, thinkingEnd, content].filter(x => x).join('');
     }
 
     return content;

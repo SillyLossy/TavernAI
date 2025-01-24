@@ -2158,9 +2158,10 @@ function getStreamingReply(data, state) {
         const thoughts = data.choices?.filter(x => oai_settings.show_thoughts || !x?.delta?.reasoning_content)?.[0]?.delta?.reasoning_content || '';
         const content = data.choices?.[0]?.delta?.content || '';
         state.hadThoughts = !!thoughts;
-        const separator = hadThoughts && !thoughts ? '\n\n' : '';
-        return [thoughts, separator, content].filter(x => x).join('\n\n');
-    } else  {
+        const thinkingBegin = !hadThoughts && thoughts ? '<think>\n' : '';
+        const thinkingEnd = hadThoughts && !thoughts ? '\n</think>\n\n' : '';
+        return [thinkingBegin, thoughts, thinkingEnd, content].filter(x => x).join('');
+    } else {
         return data.choices?.[0]?.delta?.content ?? data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? '';
     }
 }
