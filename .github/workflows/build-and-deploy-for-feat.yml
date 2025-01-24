@@ -28,7 +28,7 @@ jobs:
           echo ${{ github.repository }}
           echo ${{ github.ref_name }}
           tag=${{ github.sha }}
-          image=$(echo ${{ github.repository }} | sed 's/duguyixiaono1\///')
+          image=$(echo ${{ github.repository }} | sed 's/LoveTavern\///')
           echo "IMAGE_NAME=$image" >> "$GITHUB_ENV"
           echo "TAG=$tag" >> "$GITHUB_ENV"
       - name: Cache Node.js modules
