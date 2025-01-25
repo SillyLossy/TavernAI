@@ -615,6 +615,12 @@ app.use('/api/backends/scale-alt', scaleAltRouter);
 app.use('/api/speech', speechRouter);
 app.use('/api/azure', azureRouter);
 
+// If all other middlewares fail, send 404 error.
+const notFoundWebpage = fs.readFileSync('./public/error/url-not-found.html', { encoding: 'utf-8' });
+app.use((req, res, next) => {
+    res.status(404).send(notFoundWebpage);
+});
+
 const tavernUrlV6 = new URL(
     (cliArguments.ssl ? 'https://' : 'http://') +
     (listen ? '[::]' : '[::1]') +

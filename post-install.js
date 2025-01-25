@@ -2,7 +2,7 @@
  * Scripts to be done before starting the server for the first time.
  */
 import fs from 'node:fs';
-import path from 'node:path';
+import path from 'node:path/posix'; // Windows can handle Unix paths, but not vice-versa
 import crypto from 'node:crypto';
 import process from 'node:process';
 import yaml from 'yaml';
@@ -213,20 +213,60 @@ function addMissingConfigValues() {
  * Creates the default config files if they don't exist yet.
  */
 function createDefaultFiles() {
-    const files = {
-        config: './config.yaml',
-        user: './public/css/user.css',
-    };
+    /**
+     * @typedef DefaultItem
+     * @type {object}
+     * @property {'file' | 'directory'} type - Whether the item should be copied as a single file or merged into a directory structure.
+     * @property {string} defaultPath - The path to the default item (typically in `default/`).
+     * @property {string} productionPath - The path to the copied item for production use.
+     */
 
-    for (const file of Object.values(files)) {
+    /** @type {DefaultItem[]} */
+    const defaultItems = [
+        {
+            type: 'file',
+            defaultPath: './default/config.yaml',
+            productionPath: './config.yaml',
+        },
+        {
+            type: 'directory',
+            defaultPath: './default/public/',
+            productionPath: './public/',
+        },
+    ];
+
+    for (const defaultItem of defaultItems) {
         try {
-            if (!fs.existsSync(file)) {
-                const defaultFilePath = path.join('./default', path.parse(file).base);
-                fs.copyFileSync(defaultFilePath, file);
-                console.log(color.green(`Created default file: ${file}`));
+            if (defaultItem.type === 'file') {
+                if (!fs.existsSync(defaultItem.productionPath)) {
+                    fs.copyFileSync(
+                        defaultItem.defaultPath,
+                        defaultItem.productionPath,
+                    );
+                    console.log(
+                        color.green(`Created default file: ${defaultItem.productionPath}`),
+                    );
+                }
+            } else if (defaultItem.type === 'directory') {
+                fs.cpSync(defaultItem.defaultPath, defaultItem.productionPath, {
+                    force: false, // Don't overwrite existing files!
+                    recursive: true,
+                });
+                console.log(
+                    color.green(`Synchronized missing files: ${defaultItem.productionPath}`),
+                );
+            } else {
+                throw new Error(
+                    'FATAL: Unexpected default file format in `post-install.js#createDefaultFiles()`.',
+                );
             }
         } catch (error) {
-            console.error(color.red(`FATAL: Could not write default file: ${file}`), error);
+            console.error(
+                color.red(
+                    `FATAL: Could not write default ${defaultItem.type}: ${defaultItem.productionPath}`,
+                ),
+                error,
+            );
         }
     }
 }
