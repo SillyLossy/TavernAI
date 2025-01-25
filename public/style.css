@@ -1191,6 +1191,8 @@ body.swipeAllMessages .mes:not(.last_mes) .swipes-counter {
 }
 
 .avatars_inline {
+    display: flex;
+    gap: 5px;
     flex-wrap: wrap;
     overflow: hidden;
     max-height: calc(var(--avatar-base-height) + 2 * var(--avatar-base-border-radius));
@@ -1225,6 +1227,11 @@ body.swipeAllMessages .mes:not(.last_mes) .swipes-counter {
 
 .avatars_inline .avatar:last-of-type {
     margin-right: calc(var(--avatar-base-border-radius));
+}
+
+.avatars_multiline {
+    max-height: fit-content;
+    height: inherit;
 }
 
 .mes_block {
@@ -3775,6 +3782,14 @@ input[type='checkbox'].del_checkbox {
     color: var(--golden);
 }
 
+#lock_persona_default.locked i.icon {
+    color: var(--golden);
+}
+#lock_user_name.locked i.icon,
+#lock_persona_to_char.locked i.icon {
+    color: var(--active);
+}
+
 #user_avatar_block .avatar_upload {
     cursor: pointer;
     width: 60px;
@@ -5777,4 +5792,8 @@ body:not(.movingUI) .drawer-content.maximized {
 
 .mes_text div[data-type="assistant_note"]:has(.assistant_note_export)>div:not(.assistant_note_export) {
     flex: 1;
+}
+
+.multiline {
+    white-space: pre-wrap;
 }

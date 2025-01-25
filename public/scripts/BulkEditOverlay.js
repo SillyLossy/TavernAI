@@ -672,7 +672,7 @@ class BulkEditOverlay {
      * @param {HTMLElement} currentCharacter - The html element of the currently toggled character
      */
     handleShiftClick = (currentCharacter) => {
-        const characterId = currentCharacter.getAttribute('chid');
+        const characterId = Number(currentCharacter.getAttribute('data-chid'));
         const select = !this.selectedCharacters.includes(characterId);
 
         if (this.lastSelected.characterId && this.lastSelected.select !== undefined) {
@@ -691,7 +691,7 @@ class BulkEditOverlay {
      * @param {boolean} [param1.markState] - Whether the toggle of this character should be remembered as the last done toggle
      */
     toggleSingleCharacter = (character, { markState = true } = {}) => {
-        const characterId = character.getAttribute('chid');
+        const characterId = Number(character.getAttribute('data-chid'));
 
         const select = !this.selectedCharacters.includes(characterId);
         const legacyBulkEditCheckbox = character.querySelector('.' + BulkEditOverlay.legacySelectedClass);
@@ -699,11 +699,11 @@ class BulkEditOverlay {
         if (select) {
             character.classList.add(BulkEditOverlay.selectedClass);
             if (legacyBulkEditCheckbox) legacyBulkEditCheckbox.checked = true;
-            this.#selectedCharacters.push(String(characterId));
+            this.#selectedCharacters.push(characterId);
         } else {
             character.classList.remove(BulkEditOverlay.selectedClass);
             if (legacyBulkEditCheckbox) legacyBulkEditCheckbox.checked = false;
-            this.#selectedCharacters = this.#selectedCharacters.filter(item => String(characterId) !== item);
+            this.#selectedCharacters = this.#selectedCharacters.filter(item => characterId !== item);
         }
 
         this.updateSelectedCount();
@@ -732,15 +732,15 @@ class BulkEditOverlay {
      * @param {boolean} select - <c>true</c> if the characters in the range are to be selected, <c>false</c> if deselected
      */
     toggleCharactersInRange = (currentCharacter, select) => {
-        const currentCharacterId = currentCharacter.getAttribute('chid');
+        const currentCharacterId = Number(currentCharacter.getAttribute('data-chid'));
         const characters = Array.from(document.querySelectorAll('#' + BulkEditOverlay.containerId + ' .' + BulkEditOverlay.characterClass));
 
-        const startIndex = characters.findIndex(c => c.getAttribute('chid') === this.lastSelected.characterId);
-        const endIndex = characters.findIndex(c => c.getAttribute('chid') === currentCharacterId);
+        const startIndex = characters.findIndex(c => Number(c.getAttribute('data-chid')) === Number(this.lastSelected.characterId));
+        const endIndex = characters.findIndex(c => Number(c.getAttribute('data-chid')) === currentCharacterId);
 
         for (let i = Math.min(startIndex, endIndex); i <= Math.max(startIndex, endIndex); i++) {
             const character = characters[i];
-            const characterId = character.getAttribute('chid');
+            const characterId = Number(character.getAttribute('data-chid'));
             const isCharacterSelected = this.selectedCharacters.includes(characterId);
 
             // Only toggle the character if it wasn't on the state we have are toggling towards.
