@@ -323,6 +323,13 @@ async function sendMakerSuiteRequest(request, response) {
             generationConfig: generationConfig,
         };
 
+        const isThinking = model.includes('thinking');
+        if (isThinking) {
+            body.generationConfig.thinkingConfig = {
+                includeThoughts: showThoughts,
+            };
+        }
+
         if (should_use_system_prompt) {
             body.systemInstruction = prompt.system_instruction;
         }
@@ -384,10 +391,6 @@ async function sendMakerSuiteRequest(request, response) {
 
             const responseContent = candidates[0].content ?? candidates[0].output;
             console.log('Google AI Studio response:', responseContent);
-
-            if (Array.isArray(responseContent?.parts) && isThinking && !showThoughts) {
-                responseContent.parts = responseContent.parts.filter(part => !part.thought);
-            }
 
             const responseText = typeof responseContent === 'string' ? responseContent : responseContent?.parts?.map(part => part.text)?.join('\n\n');
             if (!responseText) {
