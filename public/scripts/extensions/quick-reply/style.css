@@ -173,7 +173,7 @@
 .ctx-menu {
   position: absolute;
   overflow: hidden auto;
-  max-height: 50dvh;
+  max-height: 75dvh;
   padding: 5px;
 }
 .ctx-menu .ctx-item .qr--hidden {
@@ -206,6 +206,9 @@
 @media screen and (max-width: 1000px) {
   .ctx-blocker {
     position: absolute;
+  }
+  .ctx-menu {
+    max-height: 65dvh;
   }
   .list-group .list-group-item.ctx-item {
     padding: 5px;
