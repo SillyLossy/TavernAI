@@ -114,6 +114,9 @@ import { router as textCompletionsRouter } from './src/endpoints/backends/text-c
 import { router as scaleAltRouter } from './src/endpoints/backends/scale-alt.js';
 import { router as speechRouter } from './src/endpoints/speech.js';
 import { router as azureRouter } from './src/endpoints/azure.js';
+import { router as squareRouter } from './src/endpoints/square.js';
+import { connectDB } from './src/database/connection.js';
+import { requestlogMiddleware } from './src/middleware/requestlog.js';
 
 // Work around a node v20.0.0, v20.1.0, and v20.2.0 bug. The issue was fixed in v20.3.0.
 // https://github.com/nodejs/node/issues/47822#issuecomment-1564708870
@@ -237,6 +240,9 @@ console.log(`Node version: ${process.version}. Running in ${process.env.NODE_ENV
 process.chdir(serverDirectory);
 
 const app = express();
+
+// 添加日志中间件（在其他中间件之前）
+app.use(requestlogMiddleware);
 
 // 添加健康检查接口
 app.get('/health', (req, res) => {
@@ -621,6 +627,7 @@ app.use('/api/backends/chat-completions', chatCompletionsRouter);
 app.use('/api/backends/scale-alt', scaleAltRouter);
 app.use('/api/speech', speechRouter);
 app.use('/api/azure', azureRouter);
+app.use('/api/square', squareRouter);
 
 const tavernUrlV6 = new URL(
     (cliArguments.ssl ? 'https://' : 'http://') +
@@ -657,6 +664,9 @@ const preSetupTasks = async function () {
 
     await settingsInit();
     await statsInit();
+
+    // 初始化数据库连接
+    await connectDB();
 
     const cleanupPlugins = await initializePlugins();
     const consoleTitle = process.title;

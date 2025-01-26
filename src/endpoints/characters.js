@@ -200,7 +200,7 @@ const calculateDataSize = (data) => {
  * @param  {import('../users.js').UserDirectoryList} directories User directories
  * @return {Promise<object>}     A Promise that resolves when the character processing is done.
  */
-const processCharacter = async (item, directories) => {
+export const processCharacter = async (item, directories) => {
     try {
         const imgFile = path.join(directories.characters, item);
         const imgData = await readCharacterData(imgFile);

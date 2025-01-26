@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
 
 import encode from 'png-chunks-encode';
 import extract from 'png-chunks-extract';
@@ -89,7 +90,10 @@ export const parse = (cardUrl, format) => {
     switch (fileFormat) {
         case 'png': {
             const buffer = fs.readFileSync(cardUrl);
-            return read(buffer);
+            const data = JSON.parse(read(buffer));
+            const hash = crypto.createHash('md5').update(cardUrl).digest('hex');
+            data.hash = hash;
+            return JSON.stringify(data);
         }
     }
 

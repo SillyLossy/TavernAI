@@ -196,3 +196,6 @@ claude:
   cachingAtDepth: -1
 # -- SERVER PLUGIN CONFIGURATION --
 enableServerPlugins: false
+
+database:
+  url: mongodb+srv://lovetavern:7kKtMg8ClGRuXsjY@cluster0.hzhgz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
