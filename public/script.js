@@ -4740,7 +4740,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         }
 
         //const getData = await response.json();
-        let getMessage = extractMessageFromData(data);
+        let getMessage = extractMessageFromData(data, isContinue);
         let title = extractTitleFromData(data);
         kobold_horde_model = title;
 
@@ -5652,9 +5652,10 @@ function parseAndSaveLogprobs(data, continueFrom) {
 /**
  * Extracts the message from the response data.
  * @param {object} data Response data
+ * @param {boolean} isContinue Whether the generation was a continuation.
  * @returns {string} Extracted message
  */
-function extractMessageFromData(data) {
+function extractMessageFromData(data, isContinue = false) {
     if (typeof data === 'string') {
         return data;
     }
@@ -5678,9 +5679,11 @@ function extractMessageFromData(data) {
 
     const content = getTextContext();
 
-    if (main_api === 'openai' && oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK && oai_settings.show_thoughts) {
-        const thoughts = data?.choices?.[0]?.message?.reasoning_content ?? '';
-        return [thoughts, content].filter(x => x).join('\n\n');
+    if (main_api === 'openai' && oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK) {
+        const thoughts = oai_settings.show_thoughts ? data?.choices?.[0]?.message?.reasoning_content ?? null : null;
+        const thinkingBegin = !isContinue && thoughts !== null ? power_user.thinking_begin : '';
+        const thinkingEnd = thoughts !== null ? power_user.thinking_end : '';
+        return [thinkingBegin, thoughts ?? '', thinkingEnd, content].filter(x => x).join('');
     }
 
     return content;

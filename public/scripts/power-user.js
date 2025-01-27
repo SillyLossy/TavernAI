@@ -120,6 +120,8 @@ let power_user = {
     always_force_name2: false,
     user_prompt_bias: '',
     show_user_prompt_bias: true,
+    thinking_begin: '<think>\n',
+    thinking_end: '\n</think>\n\n',
     auto_continue: {
         enabled: false,
         allow_chat_completions: false,

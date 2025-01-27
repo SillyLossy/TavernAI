@@ -2039,6 +2039,14 @@ async function sendOpenAIRequest(type, messages, signal) {
             delete generate_data.top_logprobs;
             delete generate_data.logprobs;
             delete generate_data.logit_bias;
+
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage?.role === 'assistant' && lastMessage.content.startsWith(power_user.thinking_begin)) {
+                const parts = lastMessage.content.slice(power_user.thinking_begin.length).split(power_user.thinking_end);
+                lastMessage.reasoning_content = parts[0];
+                lastMessage.content = parts.slice(1).join(power_user.thinking_end);
+                generate_data.is_thinking = parts.length === 1;
+            }
         }
     }
 
@@ -2095,7 +2103,9 @@ async function sendOpenAIRequest(type, messages, signal) {
             let text = '';
             const swipes = [];
             const toolCalls = [];
-            const state = {};
+            const state = {
+                isThinking: !!generate_data.is_thinking,
+            };
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) return;
@@ -2154,13 +2164,13 @@ function getStreamingReply(data, state) {
     } else if (oai_settings.chat_completion_source === chat_completion_sources.COHERE) {
         return data?.delta?.message?.content?.text || data?.delta?.message?.tool_plan || '';
     } else if (oai_settings.chat_completion_source === chat_completion_sources.DEEPSEEK) {
-        const hadThoughts = state.hadThoughts;
-        const thoughts = data.choices?.filter(x => oai_settings.show_thoughts || !x?.delta?.reasoning_content)?.[0]?.delta?.reasoning_content || '';
+        const thoughts = oai_settings.show_thoughts ? data.choices?.[0]?.delta?.reasoning_content ?? null : null;
+        const thinkingBegin = !state.isThinking && thoughts !== null ? power_user.thinking_begin : '';
+        const thinkingEnd = state.isThinking && thoughts === null ? power_user.thinking_end : '';
         const content = data.choices?.[0]?.delta?.content || '';
-        state.hadThoughts = !!thoughts;
-        const separator = hadThoughts && !thoughts ? '\n\n' : '';
-        return [thoughts, separator, content].filter(x => x).join('\n\n');
-    } else  {
+        state.isThinking = thoughts !== null;
+        return [thinkingBegin, thoughts ?? '', thinkingEnd, content].filter(x => x).join('');
+    } else {
         return data.choices?.[0]?.delta?.content ?? data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? '';
     }
 }
