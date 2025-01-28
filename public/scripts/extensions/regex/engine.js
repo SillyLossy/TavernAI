@@ -67,6 +67,32 @@ function getScopedRegex() {
 }
 
 /**
+ * Checks if the regex script can be executed based on the markdown and prompt options.
+ * @param {import('../../char-data.js').RegexScriptData} script The regex script to check
+ * @param {boolean} isMarkdown
+ * @param {boolean} isPrompt
+ * @returns {boolean} Whether the script can be executed
+ */
+function canExecuteByEphemerality(script, isMarkdown, isPrompt) {
+    // If both options are enabled, check if either condition is met
+    if (script.markdownOnly && script.promptOnly) {
+        return isMarkdown || isPrompt;
+    }
+
+    // Check individual options
+    if (script.markdownOnly) {
+        return isMarkdown;
+    }
+
+    if (script.promptOnly) {
+        return isPrompt;
+    }
+
+    // If no restrictions, always process
+    return true;
+}
+
+/**
  * Parent function to fetch a regexed version of a raw string
  * @param {string} rawString The raw string to be regexed
  * @param {regex_placement} placement The placement of the string
@@ -88,35 +114,30 @@ function getRegexedString(rawString, placement, { characterOverride, isMarkdown,
 
     const allRegex = [...(extension_settings.regex ?? []), ...(getScopedRegex() ?? [])];
     allRegex.forEach((script) => {
-        if (
-            // Script applies to Markdown and input is Markdown
-            (script.markdownOnly && isMarkdown) ||
-            // Script applies to Generate and input is Generate
-            (script.promptOnly && isPrompt) ||
-            // Script applies to all cases when neither "only"s are true, but there's no need to do it when `isMarkdown`, the as source (chat history) should already be changed beforehand
-            (!script.markdownOnly && !script.promptOnly && !isMarkdown)
-        ) {
-            if (isEdit && !script.runOnEdit) {
-                console.debug(`getRegexedString: Skipping script ${script.scriptName} because it does not run on edit`);
+        if (isEdit && !script.runOnEdit) {
+            return;
+        }
+
+        // Check ephemerality options
+        if (!canExecuteByEphemerality(script, isMarkdown, isPrompt)) {
+            return;
+        }
+
+        // Check if the depth is within the min/max depth
+        if (typeof depth === 'number' && depth >= 0) {
+            if (!isNaN(script.minDepth) && script.minDepth !== null && script.minDepth >= 0 && depth < script.minDepth) {
+                console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is less than minDepth ${script.minDepth}`);
                 return;
             }
 
-            // Check if the depth is within the min/max depth
-            if (typeof depth === 'number' && depth >= 0) {
-                if (!isNaN(script.minDepth) && script.minDepth !== null && script.minDepth >= 0 && depth < script.minDepth) {
-                    console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is less than minDepth ${script.minDepth}`);
-                    return;
-                }
-
-                if (!isNaN(script.maxDepth) && script.maxDepth !== null && script.maxDepth >= 0 && depth > script.maxDepth) {
-                    console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is greater than maxDepth ${script.maxDepth}`);
-                    return;
-                }
+            if (!isNaN(script.maxDepth) && script.maxDepth !== null && script.maxDepth >= 0 && depth > script.maxDepth) {
+                console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is greater than maxDepth ${script.maxDepth}`);
+                return;
             }
+        }
 
-            if (script.placement.includes(placement)) {
-                finalString = runRegexScript(script, finalString, { characterOverride });
-            }
+        if (script.placement.includes(placement)) {
+            finalString = runRegexScript(script, finalString, { characterOverride });
         }
     });
 
