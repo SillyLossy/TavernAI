@@ -67,34 +67,6 @@ function getScopedRegex() {
 }
 
 /**
- * Checks if the regex script can be executed based on the markdown and prompt options.
- * @param {import('../../char-data.js').RegexScriptData} script The regex script to check
- * @param {boolean} isEdit Whether the script is being run on an edit
- * @param {boolean} isMarkdown Whether the script is being run on markdown
- * @param {boolean} isPrompt Whether the script is being run on a prompt
- * @returns {boolean} Whether the script can be executed
- */
-function canExecuteByEphemerality(script, isEdit, isMarkdown, isPrompt) {
-    const scriptParams = [
-        [script.runOnEdit, isEdit],
-        [script.markdownOnly, isMarkdown],
-        [script.promptOnly, isPrompt],
-    ];
-
-    // If no scripts ephemerality flags are true, the script can be run always
-    if (!scriptParams.some(([flag]) => flag)) {
-        return true;
-    }
-
-    // If any of the ephemerality flags are true, verify that is matches at least one of the passed values
-    if (scriptParams.some(([flag, value]) => flag && value)) {
-        return true;
-    }
-
-    return false;
-}
-
-/**
  * Parent function to fetch a regexed version of a raw string
  * @param {string} rawString The raw string to be regexed
  * @param {regex_placement} placement The placement of the string
@@ -116,27 +88,35 @@ function getRegexedString(rawString, placement, { characterOverride, isMarkdown,
 
     const allRegex = [...(extension_settings.regex ?? []), ...(getScopedRegex() ?? [])];
     allRegex.forEach((script) => {
-
-        // Check ephemerality options
-        if (!canExecuteByEphemerality(script, isEdit, isMarkdown, isPrompt)) {
-            return;
-        }
-
-        // Check if the depth is within the min/max depth
-        if (typeof depth === 'number' && depth >= 0) {
-            if (!isNaN(script.minDepth) && script.minDepth !== null && script.minDepth >= 0 && depth < script.minDepth) {
-                console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is less than minDepth ${script.minDepth}`);
+        if (
+            // Script applies to Markdown and input is Markdown
+            (script.markdownOnly && isMarkdown) ||
+            // Script applies to Generate and input is Generate
+            (script.promptOnly && isPrompt) ||
+            // Script applies to all cases when neither "only"s are true, but there's no need to do it when `isMarkdown`, the as source (chat history) should already be changed beforehand
+            (!script.markdownOnly && !script.promptOnly && !isMarkdown && !isPrompt)
+        ) {
+            if (isEdit && !script.runOnEdit) {
+                console.debug(`getRegexedString: Skipping script ${script.scriptName} because it does not run on edit`);
                 return;
             }
 
-            if (!isNaN(script.maxDepth) && script.maxDepth !== null && script.maxDepth >= 0 && depth > script.maxDepth) {
-                console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is greater than maxDepth ${script.maxDepth}`);
-                return;
-            }
-        }
+            // Check if the depth is within the min/max depth
+            if (typeof depth === 'number' && depth >= 0) {
+                if (!isNaN(script.minDepth) && script.minDepth !== null && script.minDepth >= 0 && depth < script.minDepth) {
+                    console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is less than minDepth ${script.minDepth}`);
+                    return;
+                }
 
-        if (script.placement.includes(placement)) {
-            finalString = runRegexScript(script, finalString, { characterOverride });
+                if (!isNaN(script.maxDepth) && script.maxDepth !== null && script.maxDepth >= 0 && depth > script.maxDepth) {
+                    console.debug(`getRegexedString: Skipping script ${script.scriptName} because depth ${depth} is greater than maxDepth ${script.maxDepth}`);
+                    return;
+                }
+            }
+
+            if (script.placement.includes(placement)) {
+                finalString = runRegexScript(script, finalString, { characterOverride });
+            }
         }
     });
 
