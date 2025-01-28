@@ -18,7 +18,7 @@ import { t } from '../../i18n.js';
  * @property {string} replaceString - The replace string
  * @property {string[]} trimStrings - The trim strings
  * @property {string?} findRegex - The find regex
- * @property {string?} substituteRegex - The substitute regex
+ * @property {number?} substituteRegex - The substitute regex
  */
 
 /**

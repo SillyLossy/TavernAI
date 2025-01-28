@@ -69,27 +69,29 @@ function getScopedRegex() {
 /**
  * Checks if the regex script can be executed based on the markdown and prompt options.
  * @param {import('../../char-data.js').RegexScriptData} script The regex script to check
- * @param {boolean} isMarkdown
- * @param {boolean} isPrompt
+ * @param {boolean} isEdit Whether the script is being run on an edit
+ * @param {boolean} isMarkdown Whether the script is being run on markdown
+ * @param {boolean} isPrompt Whether the script is being run on a prompt
  * @returns {boolean} Whether the script can be executed
  */
-function canExecuteByEphemerality(script, isMarkdown, isPrompt) {
-    // If both options are enabled, check if either condition is met
-    if (script.markdownOnly && script.promptOnly) {
-        return isMarkdown || isPrompt;
+function canExecuteByEphemerality(script, isEdit, isMarkdown, isPrompt) {
+    const scriptParams = [
+        [script.runOnEdit, isEdit],
+        [script.markdownOnly, isMarkdown],
+        [script.promptOnly, isPrompt],
+    ];
+
+    // If no scripts ephemerality flags are true, the script can be run always
+    if (!scriptParams.some(([flag]) => flag)) {
+        return true;
     }
 
-    // Check individual options
-    if (script.markdownOnly) {
-        return isMarkdown;
+    // If any of the ephemerality flags are true, verify that is matches at least one of the passed values
+    if (scriptParams.some(([flag, value]) => flag && value)) {
+        return true;
     }
 
-    if (script.promptOnly) {
-        return isPrompt;
-    }
-
-    // If no restrictions, always process
-    return true;
+    return false;
 }
 
 /**
@@ -114,12 +116,9 @@ function getRegexedString(rawString, placement, { characterOverride, isMarkdown,
 
     const allRegex = [...(extension_settings.regex ?? []), ...(getScopedRegex() ?? [])];
     allRegex.forEach((script) => {
-        if (isEdit && !script.runOnEdit) {
-            return;
-        }
 
         // Check ephemerality options
-        if (!canExecuteByEphemerality(script, isMarkdown, isPrompt)) {
+        if (!canExecuteByEphemerality(script, isEdit, isMarkdown, isPrompt)) {
             return;
         }
 
