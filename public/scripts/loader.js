@@ -44,21 +44,16 @@ export async function hideLoader() {
         const transitionDuration = spinner[0] ? getComputedStyle(spinner[0]).transitionDuration : '0s';
         const hasTransitions = parseFloat(transitionDuration) > 0;
 
-        let transitionTimeout;
-        if (hasTransitions) {
-            spinner.one('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', () => {
-                clearTimeout(transitionTimeout);
-                cleanup();
-            });
-
-            // Fallback: Ensure cleanup happens even if transition event is missed
-            transitionTimeout = setTimeout(cleanup, 500);
+       if (hasTransitions) {
+            Promise.race([
+                new Promise((r) => setTimeout(r, 500)), // Fallback timeout
+                new Promise((r) => spinner.one('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', r)),
+            ]).finally(cleanup);
         } else {
             cleanup();
         }
 
         function cleanup() {
-            clearTimeout(transitionTimeout);
             $('#loader').remove();
             // Yoink preloader entirely; it only exists to cover up unstyled content while loading JS
             // If it's present, we remove it once and then it's gone.
