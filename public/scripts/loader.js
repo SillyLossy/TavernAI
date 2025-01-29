@@ -28,34 +28,48 @@ export async function hideLoader() {
 
     return new Promise((resolve) => {
         const spinner = $('#load-spinner');
-        
+        if (!spinner.length) {
+            console.warn('Spinner element not found, skipping animation');
+            cleanup();
+            return;
+        }
+
         // Apply the styles
         spinner.css({
             'filter': 'blur(15px)',
             'opacity': '0',
         });
 
-        // Check if transitions are disabled by comparing computed style
-        const transitionDuration = getComputedStyle(spinner[0]).transitionDuration;
+        // Check if transitions are enabled
+        const transitionDuration = spinner[0] ? getComputedStyle(spinner[0]).transitionDuration : '0s';
         const hasTransitions = parseFloat(transitionDuration) > 0;
 
+        let transitionTimeout;
         if (hasTransitions) {
-            // Spinner blurs/fades out
-            spinner.one('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', cleanup);
+            spinner.one('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', () => {
+                clearTimeout(transitionTimeout);
+                cleanup();
+            });
+
+            // Fallback: Ensure cleanup happens even if transition event is missed
+            transitionTimeout = setTimeout(cleanup, 500);
         } else {
-            // No transitions - clean up immediately
             cleanup();
         }
 
         function cleanup() {
+            clearTimeout(transitionTimeout);
             $('#loader').remove();
             // Yoink preloader entirely; it only exists to cover up unstyled content while loading JS
             // If it's present, we remove it once and then it's gone.
             yoinkPreloader();
-            loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE).then(() => {
-                loaderPopup = null;
-                resolve();
-            });
+
+            loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE)
+                .catch((err) => console.error('Error completing loaderPopup:', err))
+                .finally(() => {
+                    loaderPopup = null;
+                    resolve();
+                });
         }
     });
 }
