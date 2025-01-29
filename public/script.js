@@ -4809,7 +4809,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         const swipes = extractMultiSwipes(data, type);
 
         messageChunk = cleanUpMessage(getMessage, isImpersonate, isContinue, false);
-        
+
         if (isContinue) {
             getMessage = continue_mag + getMessage;
         }
@@ -5763,6 +5763,22 @@ function extractReasoningFromData(data) {
     }
 
     return '';
+}
+
+/**
+ * Extracts reasoning from the message content.
+ * @param {string} content Message content
+ * @returns {object} Reasoning
+*/
+function extractReasoningFromMessage(content) {
+    const { reasoning_prefix, reasoning_suffix } = power_user.instruct;
+    if (reasoning_prefix && reasoning_suffix && content.startsWith(reasoning_prefix)) {
+        const i = content.indexOf(reasoning_suffix, reasoning_prefix.length);
+        if (i === -1) {
+            return { reasoning: content.slice(reasoning_prefix.length), content: '' };
+        }
+        return { reasoning: content.slice(reasoning_prefix.length, i), content: content.slice(i + reasoning_suffix.length) }
+    };
 }
 
 /**
