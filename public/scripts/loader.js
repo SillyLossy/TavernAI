@@ -37,7 +37,7 @@ export async function hideLoader() {
 
         // Check if transitions are disabled by comparing computed style
         const transitionDuration = getComputedStyle(spinner[0]).transitionDuration;
-        const hasTransitions = parseInt(transitionDuration) > 0;
+        const hasTransitions = parseFloat(transitionDuration) > 0;
 
         if (hasTransitions) {
             // Spinner blurs/fades out
