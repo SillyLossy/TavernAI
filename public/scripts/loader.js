@@ -27,24 +27,36 @@ export async function hideLoader() {
     }
 
     return new Promise((resolve) => {
-        // Spinner blurs/fades out
-        $('#load-spinner').on('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', function () {
+        const spinner = $('#load-spinner');
+        
+        // Apply the styles
+        spinner.css({
+            'filter': 'blur(15px)',
+            'opacity': '0',
+        });
+
+        // Check if transitions are disabled by comparing computed style
+        const transitionDuration = getComputedStyle(spinner[0]).transitionDuration;
+        const hasTransitions = transitionDuration !== '0s' && transitionDuration !== '0';
+
+        if (hasTransitions) {
+            // Spinner blurs/fades out
+            spinner.one('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', cleanup);
+        } else {
+            // No transitions - clean up immediately
+            cleanup();
+        }
+
+        function cleanup() {
             $('#loader').remove();
             // Yoink preloader entirely; it only exists to cover up unstyled content while loading JS
             // If it's present, we remove it once and then it's gone.
             yoinkPreloader();
-
             loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE).then(() => {
                 loaderPopup = null;
                 resolve();
             });
-        });
-
-        $('#load-spinner')
-            .css({
-                'filter': 'blur(15px)',
-                'opacity': '0',
-            });
+        }
     });
 }
 
