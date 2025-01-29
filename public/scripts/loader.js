@@ -34,11 +34,7 @@ export async function hideLoader() {
             return;
         }
 
-        // Apply the styles
-        spinner.css({
-            'filter': 'blur(15px)',
-            'opacity': '0',
-        });
+
 
         // Check if transitions are enabled
         const transitionDuration = spinner[0] ? getComputedStyle(spinner[0]).transitionDuration : '0s';
@@ -58,13 +54,19 @@ export async function hideLoader() {
             // Yoink preloader entirely; it only exists to cover up unstyled content while loading JS
             // If it's present, we remove it once and then it's gone.
             yoinkPreloader();
-
-            loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE)
-                .catch((err) => console.error('Error completing loaderPopup:', err))
-                .finally(() => {
-                    loaderPopup = null;
-                    resolve();
-                });
+            
+        // Apply the styles
+        spinner.css({
+            'filter': 'blur(15px)',
+            'opacity': '0',
+        });
+            
+        loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE)
+            .catch((err) => console.error('Error completing loaderPopup:', err))
+            .finally(() => {
+                loaderPopup = null;
+                resolve();
+            });
         }
     });
 }
