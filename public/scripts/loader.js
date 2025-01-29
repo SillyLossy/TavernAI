@@ -33,14 +33,12 @@ export async function hideLoader() {
             cleanup();
             return;
         }
-
-
-
+ 
         // Check if transitions are enabled
         const transitionDuration = spinner[0] ? getComputedStyle(spinner[0]).transitionDuration : '0s';
         const hasTransitions = parseFloat(transitionDuration) > 0;
 
-       if (hasTransitions) {
+        if (hasTransitions) {
             Promise.race([
                 new Promise((r) => setTimeout(r, 500)), // Fallback timeout
                 new Promise((r) => spinner.one('transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd', r)),
@@ -55,14 +53,14 @@ export async function hideLoader() {
             // If it's present, we remove it once and then it's gone.
             yoinkPreloader();
 
-        loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE)
-            .catch((err) => console.error('Error completing loaderPopup:', err))
-            .finally(() => {
-                loaderPopup = null;
-                resolve();
-            });
+            loaderPopup.complete(POPUP_RESULT.AFFIRMATIVE)
+                .catch((err) => console.error('Error completing loaderPopup:', err))
+                .finally(() => {
+                    loaderPopup = null;
+                    resolve();
+                });
         }
-        
+
         // Apply the styles
         spinner.css({
             'filter': 'blur(15px)',
