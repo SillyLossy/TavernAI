@@ -3181,6 +3181,12 @@ class StreamingProcessor {
 
         let processedText = cleanUpMessage(text, isImpersonate, isContinue, !isFinal, this.stoppingStrings);
 
+        const extractedReasoning = extractReasoningFromMessage(processedText);
+        if (extractedReasoning) {
+            this.reasoning = extractedReasoning.reasoning;
+            processedText = extractedReasoning.content;
+        }
+
         // Predict unbalanced asterisks / quotes during streaming
         const charsToBalance = ['*', '"', '```'];
         for (const char of charsToBalance) {
@@ -4803,8 +4809,7 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         const swipes = extractMultiSwipes(data, type);
 
         messageChunk = cleanUpMessage(getMessage, isImpersonate, isContinue, false);
-        reasoning = getRegexedString(reasoning, regex_placement.REASONING);
-
+        
         if (isContinue) {
             getMessage = continue_mag + getMessage;
         }
@@ -4812,6 +4817,14 @@ export async function Generate(type, { automatic_trigger, force_name2, quiet_pro
         //Formating
         const displayIncomplete = type === 'quiet' && !quietToLoud;
         getMessage = cleanUpMessage(getMessage, isImpersonate, isContinue, displayIncomplete);
+
+        // Need to run after prompt bias is added
+        const extractedReasoning = extractReasoningFromMessage(getMessage);
+        if (extractedReasoning) {
+            reasoning += extractedReasoning.reasoning;
+            getMessage = extractedReasoning.message;
+        }
+        reasoning = getRegexedString(reasoning, regex_placement.REASONING);
 
         if (isImpersonate) {
             $('#send_textarea').val(getMessage)[0].dispatchEvent(new Event('input', { bubbles: true }));

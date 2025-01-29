@@ -222,6 +222,8 @@ let power_user = {
         system_sequence_prefix: '',
         system_sequence_suffix: '',
         stop_sequence: '',
+        reasoning_prefix: '',
+        reasoning_suffix: '',
         wrap: true,
         macro: true,
         names_behavior: names_behavior_types.FORCE,
