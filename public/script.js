@@ -10723,6 +10723,9 @@ jQuery(async function () {
             this_edit_mes_id = edit_mes_id;
 
             var text = chat[edit_mes_id]['mes'];
+
+            text = new PromptReasoning().addToMessage(text, chat[edit_mes_id].extra?.reasoning ?? '', true);
+
             if (chat[edit_mes_id]['is_user']) {
                 this_edit_mes_chname = name1;
             } else if (chat[edit_mes_id]['force_avatar']) {

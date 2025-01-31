@@ -218,7 +218,7 @@ function registerReasoningMacros() {
     MacrosParser.registerMacro('reasoningSeparator', () => power_user.reasoning.separator, t`Reasoning Separator`);
 }
 
-function setReasoningEventHandlers(){
+function setReasoningEventHandlers() {
     $(document).on('click', '.mes_reasoning_copy', (e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -377,7 +377,7 @@ function parseReasoningFromString(str) {
 }
 
 function registerReasoningAppEvents() {
-    eventSource.makeFirst(event_types.MESSAGE_RECEIVED, (/** @type {number} */ idx) => {
+    function handleEvent(/** @type {number} */ idx) {
         if (!power_user.reasoning.auto_parse) {
             return;
         }
@@ -427,7 +427,10 @@ function registerReasoningAppEvents() {
                 updateMessageBlock(idx, message);
             }
         }
-    });
+    };
+
+    eventSource.makeFirst(event_types.MESSAGE_RECEIVED, handleEvent);
+    eventSource.makeFirst(event_types.MESSAGE_EDITED, handleEvent);
 }
 
 export function initReasoning() {
