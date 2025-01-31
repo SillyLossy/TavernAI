@@ -68,16 +68,14 @@ async function createAssistant() {
 
         await sleep(0);
 
-        if ([characterNameInput, saveCharacterButton].every(Boolean)) {
-            characterNameInput.value = ASSISTANT_NAME;
-            firstMessageTextarea.value = 'Hello! I am your assistant. How can I help you today?';
+        characterNameInput.value = ASSISTANT_NAME;
+        firstMessageTextarea.value = 'Hello! I am your assistant. How can I help you today?';
 
-            await sleep(0);
+        await sleep(0);
 
-            saveCharacterButton.click();
+        saveCharacterButton.click();
 
-            await sleep(100);
-        }
+        await sleep(100);
     } catch (error) {
         console.error('Unable to create assistant.', error);
         toastr.error(t`Unable to create assistant.`, t`Error`, { timeOut: 0, extendedTimeOut: 0, preventDuplicates: true });
