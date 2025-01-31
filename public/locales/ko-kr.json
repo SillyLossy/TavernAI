@@ -1622,5 +1622,8 @@
     "to install additional features.": "으로 가세요.",
     "Master Import": "마스터 불러오기",
     "Master Export": "마스터 내보내기",
-    "Chat Quick Reply Sets": "채팅 빠른 답장 세트들"
+    "Chat Quick Reply Sets": "채팅 빠른 답장 세트들",
+    "Alternatively,": "대안적으로,",
+    "Create a new Assistant": "새 어시스턴트 만들기",
+    "Unable to create assistant.": "어시스턴트를 생성할 수 없습니다."
 }

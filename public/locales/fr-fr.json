@@ -2050,5 +2050,8 @@
     "System Prompt Name": "Nom du prompt système:",
     "Instruct Mode": "Mode Instruction:",
     "Save and Update": "Sauvegarder et mettre à jour",
-    "Don't ask again for this URL": "Ne plus demander pour cette URL"
+    "Don't ask again for this URL": "Ne plus demander pour cette URL",
+    "Alternatively,": "Alternativement,",
+    "Create a new Assistant": "Créer un nouvel assistant",
+    "Unable to create assistant.": "Impossible de créer l'assistant."
 }

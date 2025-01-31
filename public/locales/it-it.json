@@ -1439,5 +1439,8 @@
     "Still have questions?": "Hai ancora domande?",
     "Join the SillyTavern Discord": "Unisciti al SillyTavern Discord",
     "Post a GitHub issue": "Pubblica un problema su GitHub",
-    "Contact the developers": "Contatta gli sviluppatori"
+    "Contact the developers": "Contatta gli sviluppatori",
+    "Alternatively,": "In alternativa,",
+    "Create a new Assistant": "Crea un nuovo assistente",
+    "Unable to create assistant.": "Impossibile creare l'assistente."
 }

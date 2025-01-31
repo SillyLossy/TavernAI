@@ -1444,5 +1444,8 @@
     "Contact the developers": "開発者に連絡",
     "Stop Inspecting": "検査を停止",
     "Inspect Prompts": "プロンプトを検査",
-    "Toggle prompt inspection": "プロンプト検査の切り替え"
+    "Toggle prompt inspection": "プロンプト検査の切り替え",
+    "Alternatively,": "あるいは、",
+    "Create a new Assistant": "新しいアシスタントを作成する",
+    "Unable to create assistant.": "アシスタントを作成できません。"
 }

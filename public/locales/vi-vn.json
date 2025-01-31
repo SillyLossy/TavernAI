@@ -1439,5 +1439,8 @@
     "Still have questions?": "Bạn còn thắc mắc?",
     "Join the SillyTavern Discord": "Tham gia Kênh Discord của SillyTavern",
     "Post a GitHub issue": "Đăng một vấn đề trên GitHub",
-    "Contact the developers": "Liên hệ với Devs"
+    "Contact the developers": "Liên hệ với Devs",
+    "Alternatively,": "Ngoài ra,",
+    "Create a new Assistant": "Tạo Trợ lý mới",
+    "Unable to create assistant.": "Không thể tạo trợ lý."
 }

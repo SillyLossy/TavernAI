@@ -2452,5 +2452,8 @@
     "Modules provided by your Extras API:": "由您的 Extras API 提供的模組：",
     "Not connected to the API!": "未連線到 API！",
     "ext_type_system": "這是內建的擴充功能，無法刪除，且會跟隨系統更新。",
-    "Valid": "已驗證"
+    "Valid": "已驗證",
+    "Alternatively,": "或者，",
+    "Create a new Assistant": "建立新助理",
+    "Unable to create assistant.": "無法創建助手。"
 }

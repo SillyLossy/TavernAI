@@ -1439,5 +1439,8 @@
     "Still have questions?": "هل ما زالت لديك اسئلة؟",
     "Join the SillyTavern Discord": "انضم إلى ديسكورد SillyTavern",
     "Post a GitHub issue": "نشر مشكلة على GitHub",
-    "Contact the developers": "الاتصال بالمطورين"
+    "Contact the developers": "الاتصال بالمطورين",
+    "Alternatively,": "بدلاً من ذلك,",
+    "Create a new Assistant": "إنشاء مساعد جديد",
+    "Unable to create assistant.": "غير قادر على إنشاء مساعد"
 }

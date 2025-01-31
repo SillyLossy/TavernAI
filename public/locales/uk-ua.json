@@ -1439,5 +1439,8 @@
     "Still have questions?": "Все ще є питання?",
     "Join the SillyTavern Discord": "Приєднуйтесь до SillyTavern Discord",
     "Post a GitHub issue": "Опублікуйте проблему на GitHub",
-    "Contact the developers": "Зв'яжіться з розробниками"
+    "Contact the developers": "Зв'яжіться з розробниками",
+    "Alternatively,": "Альтернативно,",
+    "Create a new Assistant": "Створіть нового помічника",
+    "Unable to create assistant.": "Не вдалося створити помічника."
 }

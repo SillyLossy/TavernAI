@@ -269,7 +269,7 @@ import { initBulkEdit } from './scripts/bulk-edit.js';
 import { deriveTemplatesFromChatTemplate } from './scripts/chat-templates.js';
 import { getContext } from './scripts/st-context.js';
 import { initReasoning, PromptReasoning } from './scripts/reasoning.js';
-
+import { prepareCreateAssistant } from './scripts/prepare-create-assistant.js';
 // API OBJECT FOR EXTERNAL WIRING
 globalThis.SillyTavern = {
     libs,
@@ -11559,4 +11559,6 @@ jQuery(async function () {
     });
 
     initCustomSelectedSamplers();
+
+    prepareCreateAssistant();
 });

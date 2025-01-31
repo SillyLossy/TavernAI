@@ -2048,5 +2048,8 @@
     "Title/Memo": "标题（备忘）",
     "Strategy": "触发策略",
     "Position": "插入位置",
-    "Trigger %": "触发概率%"
+    "Trigger %": "触发概率%",
+    "Alternatively,": "或者，",
+    "Create a new Assistant": "创建新助理",
+    "Unable to create assistant.": "无法创建助手。"
 }

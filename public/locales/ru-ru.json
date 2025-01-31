@@ -2144,5 +2144,8 @@
     "Not connected to the API!": "Нет соединения с API!",
     "ext_type_system": "Это комплектное расширение. Его нельзя удалить, а обновляется оно вместе со всей системой.",
     "Update all": "Обновить все",
-    "Close": "Закрыть"
+    "Close": "Закрыть",
+    "Alternatively,": "Альтернативно,",
+    "Create a new Assistant": "Создать нового помощника",
+    "Unable to create assistant.": "Не удалось создать помощника."
 }

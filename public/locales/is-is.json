@@ -1439,5 +1439,8 @@
     "Still have questions?": "Ertu enn með spurningar?",
     "Join the SillyTavern Discord": "Skráðu þig í SillyTavern Discord",
     "Post a GitHub issue": "Senda inn GitHub málefni",
-    "Contact the developers": "Hafa samband við þróunaraðila"
+    "Contact the developers": "Hafa samband við þróunaraðila",
+    "Alternatively,": "Að öðrum kosti,",
+    "Create a new Assistant": "Búðu til nýjan aðstoðarmann",
+    "Unable to create assistant.": "Ekki tókst að búa til aðstoðarmann."
 }
