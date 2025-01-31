@@ -2,6 +2,8 @@ import { t } from './i18n.js';
 import { SlashCommandParser } from './slash-commands/SlashCommandParser.js';
 import { getContext } from './st-context.js';
 
+const ASSISTANT_NAME = 'Assistant';
+
 /**
  * @desc Prepare the create assistant button.
  * @returns {void}
@@ -38,7 +40,7 @@ function sleep(ms) {
 function assistantAlreadyExists() {
     const { characters } = getContext();
 
-    return characters.some(character => character.name === 'Assistant');
+    return characters.some(character => character.name === ASSISTANT_NAME);
 }
 
 /**
@@ -46,7 +48,7 @@ function assistantAlreadyExists() {
  * @returns {Promise<void>}
  */
 async function chatWithAssistant() {
-    SlashCommandParser.commands.char.callback({ _scope: null, _abortController: null }, 'Assistant');
+    SlashCommandParser.commands.char.callback({ _scope: null, _abortController: null }, ASSISTANT_NAME);
 }
 
 /**
@@ -67,7 +69,7 @@ async function createAssistant() {
         await sleep(0);
 
         if ([characterNameInput, saveCharacterButton].every(Boolean)) {
-            characterNameInput.value = 'Assistant';
+            characterNameInput.value = ASSISTANT_NAME;
             firstMessageTextarea.value = 'Hello! I am your assistant. How can I help you today?';
 
             await sleep(0);
