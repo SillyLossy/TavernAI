@@ -27,6 +27,7 @@ import { SlashCommandEnumValue, enumTypes } from '../../slash-commands/SlashComm
 import { enumIcons } from '../../slash-commands/SlashCommandCommonEnumsProvider.js';
 import { POPUP_TYPE, callGenericPopup } from '../../popup.js';
 import { GoogleTranslateTtsProvider } from './google-translate.js';
+import { getRegexedString, regex_placement } from '../regex/engine.js';
 export { talkingAnimation };
 
 const UPDATE_INTERVAL = 1000;
@@ -491,6 +492,9 @@ async function processTtsQueue() {
 
     // Substitute macros
     text = substituteParams(text);
+
+    // Run regex scripts
+    text = getRegexedString(text, regex_placement.AI_OUTPUT, { isMarkdown: true });
 
     if (extension_settings.tts.skip_codeblocks) {
         text = text.replace(/^\s{4}.*$/gm, '').trim();
