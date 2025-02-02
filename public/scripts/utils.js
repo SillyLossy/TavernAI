@@ -2221,3 +2221,34 @@ export function arraysEqual(a, b) {
     }
     return true;
 }
+
+/**
+ * Updates the content and style of an information block
+ * @param {string | HTMLElement} target - The CSS selector or the HTML element of the information block
+ * @param {string | HTMLElement} content - The message to display inside the information block (supports HTML) or an HTML element
+ * @param {'hint' | 'info' | 'warning' | 'error'} [type='info'] - The type of message, which determines the styling of the information block
+ */
+export function setInfoBlock(target, content, type = 'info') {
+    const infoBlock = typeof target === 'string' ? document.querySelector(target) : target;
+    if (infoBlock) {
+        infoBlock.className = `info-block ${type}`;
+        if (typeof content === 'string') {
+            infoBlock.innerHTML = content;
+        } else {
+            infoBlock.innerHTML = '';
+            infoBlock.appendChild(content);
+        }
+    }
+}
+
+/**
+ * Clears the content and style of an information block.
+ * @param {string | HTMLElement} target - The CSS selector or the HTML element of the information block
+ */
+export function clearInfoBlock(target) {
+    const infoBlock = typeof target === 'string' ? document.querySelector(target) : target;
+    if (infoBlock && infoBlock.classList.contains('info-block')) {
+        infoBlock.className = '';
+        infoBlock.innerHTML = '';
+    }
+}

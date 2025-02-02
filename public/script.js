@@ -235,6 +235,11 @@ import {
     initPersonas,
     setPersonaDescription,
     initUserAvatar,
+    updatePersonaConnectionsAvatarList,
+    getConnectedPersonas,
+    askForPersonaSelection,
+    getCurrentConnectionObj,
+    isPersonaPanelOpen,
 } from './scripts/personas.js';
 import { getBackgrounds, initBackgrounds, loadBackgroundSettings, background_settings } from './scripts/backgrounds.js';
 import { hideLoader, showLoader } from './scripts/loader.js';
@@ -1346,6 +1351,14 @@ export function resultCheckStatus() {
     stopStatusLoading();
 }
 
+
+/**
+ * Switches the currently selected character to the one with the given ID. (character index, not the character key!)
+ *
+ * If the character ID doesn't exist, if the chat is being saved, or if a group is being generated, this function does nothing.
+ * If the character is different from the currently selected one, it will clear the chat and reset any selected character or group.
+ * @param {number} id The ID of the character to switch to.
+ */
 export async function selectCharacterById(id) {
     if (characters[id] === undefined) {
         return;
@@ -1419,7 +1432,7 @@ function getCharacterBlock(item, id) {
     }
     // Populate the template
     const template = $('#character_template .character_select').clone();
-    template.attr({ 'chid': id, 'id': `CharID${id}` });
+    template.attr({ 'data-chid': id, 'id': `CharID${id}` });
     template.find('img').attr('src', this_avatar).attr('alt', item.name);
     template.find('.avatar').attr('title', `[Character] ${item.name}\nFile: ${item.avatar}`);
     template.find('.ch_name').text(item.name).attr('title', `[Character] ${item.name}`);
@@ -1545,6 +1558,7 @@ export async function printCharacters(fullRefresh = false) {
     });
 
     favsToHotswap();
+    updatePersonaConnectionsAvatarList();
 }
 
 /** Checks the state of the current search, and adds/removes the search sorting option accordingly */
@@ -6346,7 +6360,7 @@ export async function renameCharacter(name = null, { silent = false, renameChats
             if (newChId !== -1) {
                 // Select the character after the renaming
                 this_chid = -1;
-                await selectCharacterById(String(newChId));
+                await selectCharacterById(newChId);
 
                 // Async delay to update UI
                 await delay(1);
@@ -6622,7 +6636,7 @@ export function buildAvatarList(block, entities, { templateId = 'inline_avatar_t
         }
 
         avatarTemplate.attr('data-type', entity.type);
-        avatarTemplate.attr({ 'chid': id, 'id': `CharID${id}` });
+        avatarTemplate.attr('data-chid', id);
         avatarTemplate.find('img').attr('src', this_avatar).attr('alt', entity.item.name);
         avatarTemplate.attr('title', `[Character] ${entity.item.name}\nFile: ${entity.item.avatar}`);
         if (highlightFavs) {
@@ -6637,7 +6651,13 @@ export function buildAvatarList(block, entities, { templateId = 'inline_avatar_t
             avatarTemplate.addClass(grpTemplate.attr('class'));
             avatarTemplate.empty();
             avatarTemplate.append(grpTemplate.children());
+            avatarTemplate.attr({ 'data-grid': id, 'data-chid': null });
             avatarTemplate.attr('title', `[Group] ${entity.item.name}`);
+        }
+        else if (entity.type === 'persona') {
+            avatarTemplate.attr({ 'data-pid': id, 'data-chid': null });
+            avatarTemplate.find('img').attr('src', getUserAvatar(entity.item.avatar));
+            avatarTemplate.attr('title', `[Persona] ${entity.item.name}\nFile: ${entity.item.avatar}`);
         }
 
         if (interactable) {
@@ -6875,14 +6895,14 @@ export function changeMainAPI() {
     forceCharacterEditorTokenize();
 }
 
-export function setUserName(value) {
+export function setUserName(value, { toastPersonaNameChange = true } = {}) {
     name1 = value;
     if (name1 === undefined || name1 == '')
         name1 = default_user_name;
     console.log(`User name changed to ${name1}`);
-    $('#your_name').val(name1);
-    if (power_user.persona_show_notifications) {
-        toastr.success(t`Your messages will now be sent as ${name1}`, t`Current persona updated`);
+    $('#your_name').text(name1);
+    if (toastPersonaNameChange && power_user.persona_show_notifications && !isPersonaPanelOpen()) {
+        toastr.success(t`Your messages will now be sent as ${name1}`, t`Persona Changed`);
     }
     saveSettingsDebounced();
 }
@@ -6934,7 +6954,7 @@ export async function getSettings() {
         settings = JSON.parse(data.settings);
         if (settings.username !== undefined && settings.username !== '') {
             name1 = settings.username;
-            $('#your_name').val(name1);
+            $('#your_name').text(name1);
         }
 
         await setUserControls(data.enable_accounts);
@@ -10057,7 +10077,7 @@ jQuery(async function () {
     });
 
     $(document).on('click', '.character_select', async function () {
-        const id = $(this).attr('chid');
+        const id = Number($(this).attr('data-chid'));
         await selectCharacterById(id);
     });
 
@@ -10153,6 +10173,49 @@ jQuery(async function () {
         } else {
             is_advanced_char_open = false;
             $('#character_popup').css('display', 'none').removeClass('open');
+        }
+    });
+
+    $('#char_connections_button').on('click', async () => {
+        let isRemoving = false;
+
+        const connections = getConnectedPersonas();
+        const message = t`The following personas are connected to the current character.\n\nClick on a persona to select it for the current character.\nShift + Click to unlink the persona from the character.`;
+        const selectedPersona = await askForPersonaSelection(t`Persona Connections`, message, connections, {
+            okButton: t`Ok`,
+            highlightPersonas: true,
+            targetedChar: getCurrentConnectionObj(),
+            shiftClickHandler: (element, ev) => {
+
+                const personaId = $(element).attr('data-pid');
+
+                /** @type {import('./scripts/personas.js').PersonaConnection[]} */
+                const connections = power_user.persona_descriptions[personaId]?.connections;
+                if (connections) {
+                    console.log(`Unlocking persona ${personaId} from current character ${name2}`);
+                    power_user.persona_descriptions[personaId].connections = connections.filter(c => {
+                        if (menu_type == 'group_edit' && c.type == 'group' && c.id == selected_group) return false;
+                        else if (c.type == 'character' && c.id == characters[this_chid]?.avatar) return false;
+                        return true;
+                    });
+                    saveSettingsDebounced();
+                    updatePersonaConnectionsAvatarList();
+                    if (power_user.persona_show_notifications) {
+                        toastr.info(t`User persona ${power_user.personas[personaId]} is now unlocked from the current character ${name2}.`, t`Persona unlocked`);
+                    }
+
+                    isRemoving = true;
+                    $('#char_connections_button').trigger('click');
+                }
+            },
+        });
+
+        // One of the persona was selected. So load it.
+        if (!isRemoving && selectedPersona) {
+            setUserAvatar(selectedPersona, { toastPersonaNameChange: false });
+            if (power_user.persona_show_notifications) {
+                toastr.success(t`Selected persona ${power_user.personas[selectedPersona]} for current chat.`, t`Connected Persona Selected`);
+            }
         }
     });
 

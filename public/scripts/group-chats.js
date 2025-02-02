@@ -690,7 +690,7 @@ export function getGroupBlock(group) {
 
     const template = $('#group_list_template .group_select').clone();
     template.data('id', group.id);
-    template.attr('grid', group.id);
+    template.attr('data-grid', group.id);
     template.find('.ch_name').text(group.name).attr('title', `[Group] ${group.name}`);
     template.find('.group_fav_icon').css('display', 'none');
     template.addClass(group.fav ? 'is_fav' : '');
@@ -1358,7 +1358,7 @@ function getGroupCharacterBlock(character) {
     template.data('id', character.avatar);
     template.find('.avatar img').attr({ 'src': avatar, 'title': character.avatar });
     template.find('.ch_name').text(character.name);
-    template.attr('chid', characters.indexOf(character));
+    template.attr('data-chid', characters.indexOf(character));
     template.find('.ch_fav').val(isFav);
     template.toggleClass('is_fav', isFav);
 
@@ -1644,7 +1644,7 @@ async function onGroupActionClick(event) {
     }
 
     if (action === 'speak') {
-        const chid = Number(member.attr('chid'));
+        const chid = Number(member.attr('data-chid'));
         if (Number.isInteger(chid)) {
             Generate('normal', { force_chid: chid });
         }
@@ -1696,7 +1696,7 @@ function openCharacterDefinition(characterSelect) {
         return;
     }
 
-    const chid = characterSelect.attr('chid');
+    const chid = characterSelect.attr('data-chid');
 
     if (chid === null || chid === undefined) {
         return;
@@ -2014,7 +2014,7 @@ jQuery(() => {
     }
 
     $(document).on('click', '.group_select', function () {
-        const groupId = $(this).attr('chid') || $(this).attr('grid') || $(this).data('id');
+        const groupId = $(this).attr('data-chid') || $(this).attr('data-grid');
         openGroupById(groupId);
     });
     $('#rm_group_filter').on('input', filterGroupMembers);

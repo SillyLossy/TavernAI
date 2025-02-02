@@ -4731,7 +4731,7 @@ export function checkEmbeddedWorld(chid) {
     }
 
     if (characters[chid]?.data?.character_book) {
-        $('#import_character_info').data('chid', chid).show();
+        $('#import_character_info').data('data-chid', chid).show();
 
         // Only show the alert once per character
         const checkKey = `AlertWI_${characters[chid].avatar}`;
@@ -4765,7 +4765,7 @@ export function checkEmbeddedWorld(chid) {
 }
 
 export async function importEmbeddedWorldInfo(skipPopup = false) {
-    const chid = $('#import_character_info').data('chid');
+    const chid = $('#import_character_info').data('data-chid');
 
     if (chid === undefined) {
         return;

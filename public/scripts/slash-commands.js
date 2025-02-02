@@ -55,7 +55,7 @@ import { getContext, saveMetadataDebounced } from './extensions.js';
 import { getRegexedString, regex_placement } from './extensions/regex/engine.js';
 import { findGroupMemberId, groups, is_group_generating, openGroupById, resetSelectedGroup, saveGroupChat, selected_group } from './group-chats.js';
 import { chat_completion_sources, oai_settings, promptManager } from './openai.js';
-import { autoSelectPersona, retriggerFirstMessageOnEmptyChat, setPersonaLockState, togglePersonaLock, user_avatar } from './personas.js';
+import { autoSelectPersona, isPersonaLocked, retriggerFirstMessageOnEmptyChat, setPersonaLockState, togglePersonaLock, user_avatar } from './personas.js';
 import { addEphemeralStoppingString, chat_styles, flushEphemeralStoppingStrings, power_user } from './power-user.js';
 import { SERVER_INPUTS, textgen_types, textgenerationwebui_settings } from './textgen-settings.js';
 import { decodeTextTokens, getAvailableTokenizers, getFriendlyTokenizerName, getTextTokens, getTokenCountAsync, selectTokenizer } from './tokenizers.js';
@@ -75,6 +75,7 @@ import { commonEnumProviders, enumIcons } from './slash-commands/SlashCommandCom
 import { SlashCommandBreakController } from './slash-commands/SlashCommandBreakController.js';
 import { SlashCommandExecutionError } from './slash-commands/SlashCommandExecutionError.js';
 import { slashCommandReturnHelper } from './slash-commands/SlashCommandReturnHelper.js';
+import { t } from './i18n.js';
 export {
     executeSlashCommands, executeSlashCommandsWithOptions, getSlashCommandsHelp, registerSlashCommand,
 };
@@ -148,15 +149,62 @@ export function initDefaultSlashCommands() {
         helpString: 'Syncs the user persona in user-attributed messages in the current chat.',
     }));
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-        name: 'lock',
+        name: 'persona-lock',
         callback: lockPersonaCallback,
-        aliases: ['bind'],
-        helpString: 'Locks/unlocks a persona (name and avatar) to the current chat',
+        returns: 'The current lock state for the given type',
+        helpString: 'Locks/unlocks a persona (name and avatar) to the current chat. Gets the current lock state for the given type if no state is provided.',
+        namedArgumentList: [
+            SlashCommandNamedArgument.fromProps({
+                name: 'type',
+                description: 'The type of the lock, where it should apply to',
+                typeList: [ARGUMENT_TYPE.STRING],
+                defaultValue: 'chat',
+                enumList: [
+                    new SlashCommandEnumValue('chat', 'Lock the persona to the current chat.'),
+                    new SlashCommandEnumValue('character', 'Lock this persona to the currently selected character. If the setting is enabled, mutliple personas can be locked to the same character.'),
+                    new SlashCommandEnumValue('default', 'Lock this persona as the default persona for all new chats.'),
+                ],
+            }),
+        ],
         unnamedArgumentList: [
             SlashCommandArgument.fromProps({
                 description: 'state',
                 typeList: [ARGUMENT_TYPE.STRING],
-                isRequired: true,
+                enumProvider: commonEnumProviders.boolean('onOffToggle'),
+            }),
+        ],
+    }));
+    // TODO: Legacy command. Might be removed in the future and replaced by /persona-lock with aliases.
+    SlashCommandParser.addCommandObject(SlashCommand.fromProps({
+        name: 'lock',
+        callback: (args, value) => {
+            if (!value) {
+                value = 'toggle';
+                toastr.warning(t`Using /lock without a provided state to toggle the persona is deprecated. Please use /persona-lock instead.
+                    In the future this command with no state provided will return the current state, instead of toggling it.`, t`Deprecation Warning`);
+            }
+            return lockPersonaCallback(args, value);
+        },
+        returns: 'The current lock state for the given type',
+        aliases: ['bind'],
+        helpString: 'Locks/unlocks a persona (name and avatar) to the current chat. Gets the current lock state for the given type if no state is provided.',
+        namedArgumentList: [
+            SlashCommandNamedArgument.fromProps({
+                name: 'type',
+                description: 'The type of the lock, where it should apply to',
+                typeList: [ARGUMENT_TYPE.STRING],
+                defaultValue: 'chat',
+                enumList: [
+                    new SlashCommandEnumValue('chat', 'Lock the persona to the current chat.'),
+                    new SlashCommandEnumValue('character', 'Lock this persona to the currently selected character. If the setting is enabled, mutliple personas can be locked to the same character.'),
+                    new SlashCommandEnumValue('default', 'Lock this persona as the default persona for all new chats.'),
+                ],
+            }),
+        ],
+        unnamedArgumentList: [
+            SlashCommandArgument.fromProps({
+                description: 'state',
+                typeList: [ARGUMENT_TYPE.STRING],
                 defaultValue: 'toggle',
                 enumProvider: commonEnumProviders.boolean('onOffToggle'),
             }),
@@ -3444,19 +3492,25 @@ function syncCallback() {
 }
 
 async function lockPersonaCallback(_args, value) {
-    if (['toggle', 't', ''].includes(value.trim().toLowerCase())) {
-        await togglePersonaLock();
-        return '';
+    const type = _args.type ?? 'chat';
+
+    if (!value) {
+        return String(isPersonaLocked(type));
+    }
+
+    if (['toggle', 't'].includes(value.trim().toLowerCase())) {
+        const result = await togglePersonaLock(type);
+        return String(result);
     }
 
     if (isTrueBoolean(value)) {
-        await setPersonaLockState(true);
-        return '';
+        await setPersonaLockState(true, type);
+        return 'true';
     }
 
     if (isFalseBoolean(value)) {
-        await setPersonaLockState(false);
-        return '';
+        await setPersonaLockState(false, type);
+        return 'false';
 
     }
 

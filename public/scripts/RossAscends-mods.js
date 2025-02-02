@@ -280,7 +280,7 @@ async function RA_autoloadchat() {
         if (active_character !== null && active_character !== undefined) {
             const active_character_id = characters.findIndex(x => getTagKeyForEntity(x) === active_character);
             if (active_character_id !== null) {
-                await selectCharacterById(String(active_character_id));
+                await selectCharacterById(active_character_id);
 
                 // Do a little tomfoolery to spoof the tag selector
                 const selectedCharElement = $(`#rm_print_characters_block .character_select[chid="${active_character_id}"]`);
@@ -875,14 +875,14 @@ export function initRossMods() {
 
     // when a char is selected from the list, save their name as the auto-load character for next page load
     $(document).on('click', '.character_select', function () {
-        const characterId = $(this).attr('chid') || $(this).data('id');
+        const characterId = $(this).attr('data-chid');
         setActiveCharacter(characterId);
         setActiveGroup(null);
         saveSettingsDebounced();
     });
 
     $(document).on('click', '.group_select', function () {
-        const groupId = $(this).attr('chid') || $(this).attr('grid') || $(this).data('id');
+        const groupId = $(this).attr('data-chid') || $(this).attr('data-grid');
         setActiveCharacter(null);
         setActiveGroup(groupId);
         saveSettingsDebounced();

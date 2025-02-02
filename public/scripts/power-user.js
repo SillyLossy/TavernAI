@@ -1487,6 +1487,8 @@ async function loadPowerUserSettings(settings, data) {
     $('#custom_stopping_strings_macro').prop('checked', power_user.custom_stopping_strings_macro);
     $('#fuzzy_search_checkbox').prop('checked', power_user.fuzzy_search);
     $('#persona_show_notifications').prop('checked', power_user.persona_show_notifications);
+    $('#persona_allow_multi_connections').prop('checked', power_user.persona_allow_multi_connections);
+    $('#persona_auto_lock').prop('checked', power_user.persona_auto_lock);
     $('#encode_tags').prop('checked', power_user.encode_tags);
     $('#example_messages_behavior').val(getExampleMessagesBehavior());
     $(`#example_messages_behavior option[value="${getExampleMessagesBehavior()}"]`).prop('selected', true);
@@ -3699,6 +3701,16 @@ $(document).ready(() => {
 
     $('#persona_show_notifications').on('input', function () {
         power_user.persona_show_notifications = !!$(this).prop('checked');
+        saveSettingsDebounced();
+    });
+
+    $('#persona_allow_multi_connections').on('input', function () {
+        power_user.persona_allow_multi_connections = !!$(this).prop('checked');
+        saveSettingsDebounced();
+    });
+
+    $('#persona_auto_lock').on('input', function () {
+        power_user.persona_auto_lock = !!$(this).prop('checked');
         saveSettingsDebounced();
     });
 
