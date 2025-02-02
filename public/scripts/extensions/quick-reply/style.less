@@ -173,7 +173,9 @@
 
 .ctx-menu {
     position: absolute;
-    overflow: visible;
+    overflow: hidden auto;
+    max-height: 75dvh;
+    padding: 5px;
 }
 
 .ctx-menu .ctx-item .qr--hidden {
@@ -215,8 +217,12 @@
         position: absolute;
     }
 
+    .ctx-menu {
+        max-height: 65dvh;
+    }
+    
     .list-group .list-group-item.ctx-item {
-        padding: 1em;
+        padding: 5px;
     }
 }
 
