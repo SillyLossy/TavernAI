@@ -1,6 +1,5 @@
 import { isMobile } from '../../RossAscends-mods.js';
 import { getPreviewString } from './index.js';
-import { talkingAnimation } from './index.js';
 import { saveTtsProviderSettings } from './index.js';
 export { SystemTtsProvider };
 
@@ -70,7 +69,6 @@ var speechUtteranceChunker = function (utt, settings, callback) {
     //placing the speak invocation inside a callback fixes ordering and onend issues.
     setTimeout(function () {
         speechSynthesis.speak(newUtt);
-        talkingAnimation(true);
     }, 0);
 };
 
@@ -240,7 +238,6 @@ class SystemTtsProvider {
                 //some code to execute when done
                 resolve(silence);
                 console.log('System TTS done');
-                talkingAnimation(false);
             });
         });
     }

@@ -1843,14 +1843,15 @@ async function loadContextSettings() {
 
 /**
  * Common function to perform fuzzy search with optional caching
+ * @template T
  * @param {string} type - Type of search from fuzzySearchCategories
- * @param {any[]} data - Data array to search in
- * @param {Array<{name: string, weight: number, getFn?: (obj: any) => string}>} keys - Fuse.js keys configuration
+ * @param {T[]} data - Data array to search in
+ * @param {Array<{name: string, weight: number, getFn?: (obj: T) => string}>} keys - Fuse.js keys configuration
  * @param {string} searchValue - The search term
  * @param {Object.<string, { resultMap: Map<string, any> }>} [fuzzySearchCaches=null] - Optional fuzzy search caches
- * @returns {import('fuse.js').FuseResult<any>[]} Results as items with their score
+ * @returns {import('fuse.js').FuseResult<T>[]} Results as items with their score
  */
-function performFuzzySearch(type, data, keys, searchValue, fuzzySearchCaches = null) {
+export function performFuzzySearch(type, data, keys, searchValue, fuzzySearchCaches = null) {
     // Check cache if provided
     if (fuzzySearchCaches) {
         const cache = fuzzySearchCaches[type];

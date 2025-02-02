@@ -1467,7 +1467,6 @@
     "menu within": "내의 메뉴",
     "Translate text to English before classification": "분류 전에 텍스트를 영어로 번역합니다.",
     "Show default images (emojis) if sprite missing": "해당하는 스프라이트가 없으면 기본 이미지 (이모지들)을 표시합니다.",
-    "Image Type - talkinghead (extras)": "이미지 유형 - 토킹 헤드 (부가 사항)",
     "Classifier API": "분류를 위한 API",
     "Select the API for classifying expressions.": "감정 이미지들을 분류할 API를 선택하세요.",
     "Local": "로컬",

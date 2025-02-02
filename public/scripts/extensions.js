@@ -153,8 +153,18 @@ export const extension_settings = {
         refine_mode: false,
     },
     expressions: {
+        /** @type {number} see `EXPRESSION_API` */
+        api: undefined,
         /** @type {string[]} */
         custom: [],
+        showDefault: false,
+        translate: false,
+        /** @type {string} */
+        fallback_expression: undefined,
+        /** @type {string} */
+        llmPrompt: undefined,
+        allowMultiple: true,
+        rerollIfSame: false,
     },
     connectionManager: {
         selectedProfile: '',

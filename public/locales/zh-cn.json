@@ -1349,7 +1349,6 @@
     "Character Expressions": "角色表情",
     "Translate text to English before classification": "分类之前将文本翻译成英文",
     "Show default images (emojis) if sprite missing": "如果表情包缺失，则显示默认图像（表情符号）",
-    "Image Type - talkinghead (extras)": "图像类型 - 说话头像（附加内容）",
     "Classifier API": "分类器 API",
     "Select the API for classifying expressions.": "选择用于对表达式进行分类的API。",
     "Main API": "主要 API",

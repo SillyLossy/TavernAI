@@ -1602,7 +1602,6 @@
     "Character Expressions": "Expressions de personnages",
     "Translate text to English before classification": "Traduire le texte en anglais avant de le classer",
     "Show default images (emojis) if sprite missing": "Afficher les images par défaut (emojis) si le sprite est manquant",
-    "Image Type - talkinghead (extras)": "Type d'image - talkinghead (extras)",
     "Classifier API": "API de classification",
     "Select the API for classifying expressions.": "Sélectionnez l'API pour classer les expressions.",
     "Main API": "API principale",

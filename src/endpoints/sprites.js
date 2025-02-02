@@ -125,8 +125,14 @@ router.get('/get', jsonParser, function (request, response) {
                 .map((file) => {
                     const pathToSprite = path.join(spritesPath, file);
                     const mtime = fs.statSync(pathToSprite).mtime?.toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+
+                    const fileName = path.parse(pathToSprite).name.toLowerCase();
+                    // Extract the label from the filename via regex, which can be suffixed with a sub-name, either connected with a dash or a dot.
+                    // Examples: joy.png, joy-1.png, joy.expressive.png, 美しい-17.png
+                    const label = fileName.match(/^(.+?)(?:[-\\.].*?)?$/)?.[1] ?? fileName;
+
                     return {
-                        label: path.parse(pathToSprite).name.toLowerCase(),
+                        label: label,
                         path: `/characters/${name}/${file}` + (mtime ? `?t=${mtime}` : ''),
                     };
                 });
@@ -141,8 +147,9 @@ router.get('/get', jsonParser, function (request, response) {
 router.post('/delete', jsonParser, async (request, response) => {
     const label = request.body.label;
     const name = request.body.name;
+    const spriteName = request.body.spriteName || label;
 
-    if (!label || !name) {
+    if (!spriteName || !name) {
         return response.sendStatus(400);
     }
 
@@ -158,7 +165,7 @@ router.post('/delete', jsonParser, async (request, response) => {
 
         // Remove existing sprite with the same label
         for (const file of files) {
-            if (path.parse(file).name === label) {
+            if (path.parse(file).name === spriteName) {
                 fs.rmSync(path.join(spritesPath, file));
             }
         }
@@ -221,6 +228,7 @@ router.post('/upload', urlencodedParser, async (request, response) => {
     const file = request.file;
     const label = request.body.label;
     const name = request.body.name;
+    const spriteName = request.body.spriteName || label;
 
     if (!file || !label || !name) {
         return response.sendStatus(400);
@@ -243,12 +251,12 @@ router.post('/upload', urlencodedParser, async (request, response) => {
 
         // Remove existing sprite with the same label
         for (const file of files) {
-            if (path.parse(file).name === label) {
+            if (path.parse(file).name === spriteName) {
                 fs.rmSync(path.join(spritesPath, file));
             }
         }
 
-        const filename = label + path.parse(file.originalname).ext;
+        const filename = spriteName + path.parse(file.originalname).ext;
         const spritePath = path.join(file.destination, file.filename);
         const pathToFile = path.join(spritesPath, filename);
         // Copy uploaded file to sprites folder
