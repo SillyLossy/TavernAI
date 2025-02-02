@@ -2855,7 +2855,8 @@ select option:not(:checked) {
 }
 
 #instruct_enabled_label .menu_button:not(.toggleEnabled),
-#sysprompt_enabled_label .menu_button:not(.toggleEnabled) {
+#sysprompt_enabled_label .menu_button:not(.toggleEnabled),
+#bannedStringsKillSwitch_label .menu_button:not(.toggleEnabled) {
     color: Red;
 }
 

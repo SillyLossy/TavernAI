@@ -182,6 +182,7 @@ const settings = {
     grammar_string: '',
     json_schema: {},
     banned_tokens: '',
+    sendBannedTokens: true,
     sampler_priority: OOBA_DEFAULT_ORDER,
     samplers: LLAMACPP_DEFAULT_ORDER,
     samplers_priorities: APHRODITE_DEFAULT_ORDER,
@@ -274,6 +275,7 @@ export const setting_names = [
     'grammar_string',
     'json_schema',
     'banned_tokens',
+    'sendBannedTokens',
     'ignore_eos_token',
     'spaces_between_special_tokens',
     'speculative_ngram',
@@ -452,6 +454,22 @@ function getCustomTokenBans() {
     };
 }
 
+async function enableBannedStringsKillSwitch() {
+    $('#bannedStringsKillSwitch_textgenerationwebui').prop('checked', true);
+    $('#bannedStringsKillSwitch_label').find('.menu_button').addClass('toggleEnabled').prop('title', 'Banned tokens/strings are being sent into the request.');
+    settings.sendBannedTokens = true;
+    saveSettingsDebounced();
+    return '';
+}
+
+async function disableBannedStringsKillSwitch() {
+    $('#bannedStringsKillSwitch_textgenerationwebui').prop('checked', false);
+    $('#bannedStringsKillSwitch_label').find('.menu_button').removeClass('toggleEnabled').prop('title', 'Banned tokens/strings are NOT being sent into the request.');
+    settings.sendBannedTokens = false;
+    saveSettingsDebounced();
+    return '';
+}
+
 /**
  * Calculates logit bias object from the logit bias list.
  * @returns {object} Logit bias object
@@ -594,6 +612,16 @@ function sortAphroditeItemsByOrder(orderArray) {
 }
 
 jQuery(function () {
+
+    $('#bannedStringsKillSwitch_textgenerationwebui').on('change', function () {
+        const checked = $(this).prop('checked');
+        if (checked) {
+            enableBannedStringsKillSwitch();
+        } else {
+            disableBannedStringsKillSwitch();
+        }
+    });
+
     $('#koboldcpp_order').sortable({
         delay: getSortableDelay(),
         stop: function () {
@@ -924,6 +952,11 @@ function setSettingByName(setting, value, trigger) {
     if ('json_schema' === setting) {
         settings.json_schema = value ?? {};
         $('#tabby_json_schema').val(JSON.stringify(settings.json_schema, null, 2));
+        return;
+    }
+
+    if ('sendBannedTokens' === setting) {
+        $('#bannedStringsKillSwitch_textgenerationwebui').prop('checked', value).trigger('change');
         return;
     }
 
@@ -1460,6 +1493,10 @@ export function getTextGenGenerationData(finalPrompt, maxTokens, isImpersonate, 
             delete params.json_schema;
         }
     }
+
+    //last check before sending sampler params, strip banned strings if toggled off.
+    const sendBannedStrings = $('#bannedStringsKillSwitch_textgenerationwebui').prop('checked');
+    if (!sendBannedStrings) { delete params.banned_strings; }
 
     return params;
 }
