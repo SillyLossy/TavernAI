@@ -434,7 +434,7 @@ jQuery(async () => {
         const rememberKey = `Assets_SkipConfirm_${getStringHash(url)}`;
         const skipConfirm = localStorage.getItem(rememberKey) === 'true';
 
-        const confirmation = skipConfirm || await Popup.show.confirm('Loading Asset List', `<span>Are you sure you want to connect to the following url?</span><var>${url}</var>`, {
+        const confirmation = skipConfirm || await Popup.show.confirm('Loading Asset List', `<span>Are you sure you want to connect to the following url?<br></span><var>${url}</var>`, {
             customInputs: [{ id: 'assets-remember', label: 'Don\'t ask again for this URL' }],
             onClose: popup => {
                 if (popup.result) {
